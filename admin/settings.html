@@ -90,6 +90,28 @@
               </table>
             </div>
           </section>
+
+          <section class="card">
+            <div class="card__head">
+              <h2 class="card__title">
+                <span data-icon="lock" data-icon-size="20"></span>
+                تغيير كلمة المرور
+              </h2>
+            </div>
+            <p class="card__text">كلمة مرور جديدة لحساب المشرف الحالي.</p>
+
+            <form class="form" id="password-form" novalidate>
+              <div class="field">
+                <label class="field__label" for="pwd-new">كلمة المرور الجديدة</label>
+                <input class="input" id="pwd-new" type="password" dir="ltr" autocomplete="new-password" minlength="6" required />
+              </div>
+              <div class="field">
+                <label class="field__label" for="pwd-confirm">تأكيد كلمة المرور</label>
+                <input class="input" id="pwd-confirm" type="password" dir="ltr" autocomplete="new-password" minlength="6" required />
+              </div>
+              <button class="btn btn--primary" type="submit">حفظ كلمة المرور</button>
+            </form>
+          </section>
         </main>
       </div>
     </div>

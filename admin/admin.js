@@ -662,6 +662,34 @@
       });
   }
 
+  /* ——— تغيير كلمة المرور ——— */
+  function changePassword(form) {
+    const pwd = (el("pwd-new") || {}).value || "";
+    const conf = (el("pwd-confirm") || {}).value || "";
+    if (pwd.length < 6) {
+      window.UI.toast("كلمة المرور يجب أن تكون 6 أحرف على الأقل.", { type: "warning" });
+      return;
+    }
+    if (pwd !== conf) {
+      window.UI.toast("كلمتا المرور غير متطابقتين.", { type: "warning" });
+      return;
+    }
+    const btn = form.querySelector('button[type="submit"]');
+    setBtnLoading(btn, true);
+    client()
+      .auth.updateUser({ password: pwd })
+      .then(function (res) {
+        setBtnLoading(btn, false);
+        if (res.error) { fail("تعذّر تغيير كلمة المرور."); return; }
+        form.reset();
+        ok("تم تغيير كلمة المرور.");
+      })
+      .catch(function () {
+        setBtnLoading(btn, false);
+        fail("تعذّر تغيير كلمة المرور.");
+      });
+  }
+
   /* ——— ربط SMS RAEED ——— */
   function setBtnLoading(btn, loading) {
     if (!btn) return;
@@ -886,6 +914,13 @@
         form.addEventListener("submit", function (e) {
           e.preventDefault();
           addReceiver(form);
+        });
+      }
+      const pwdForm = el("password-form");
+      if (pwdForm) {
+        pwdForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          changePassword(pwdForm);
         });
       }
       const tbody = el("receivers-body");
