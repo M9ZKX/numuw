@@ -16,6 +16,7 @@
     { key: "services", label: "الخدمات", file: "services.html", icon: "sparkles" },
     { key: "orders", label: "الطلبات", file: "orders.html", icon: "bolt" },
     { key: "recharges", label: "الاستلامات", file: "recharges.html", icon: "wallet" },
+    { key: "smsraed", label: "ربط SMS RAEED", file: "smsraed.html", icon: "globe" },
     { key: "settings", label: "الإعدادات", file: "settings.html", icon: "settings" },
   ];
 
@@ -661,9 +662,139 @@
       });
   }
 
+  /* ——— ربط SMS RAEED ——— */
+  function setBtnLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+      btn.disabled = true;
+      btn.classList.add("is-loading");
+    } else {
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+    }
+  }
+
+  function applySmsraedStatus(s) {
+    const base = el("smsraed-base");
+    if (base && s.base_url) base.value = s.base_url;
+    const en = el("smsraed-enabled");
+    if (en) en.checked = !!s.enabled;
+    const keyState = el("smsraed-key-state");
+    if (keyState) {
+      keyState.innerHTML = s.key_set
+        ? '<span class="badge badge--success">المفتاح مضبوط ••••' +
+          escapeHtml(s.key_hint || "") +
+          "</span>"
+        : '<span class="badge badge--danger">لا يوجد مفتاح</span>';
+    }
+    const enState = el("smsraed-enabled-state");
+    if (enState) {
+      enState.innerHTML = s.enabled
+        ? '<span class="badge badge--success">مفعّل</span>'
+        : '<span class="badge badge--muted">معطّل</span>';
+    }
+  }
+
+  function refreshSmsraed() {
+    client()
+      .rpc("admin_smsraed_status")
+      .then(function (res) {
+        if (res.error || !res.data || res.data.ok === false) {
+          fail("تعذّر جلب حالة الربط.");
+          return;
+        }
+        applySmsraedStatus(res.data);
+      });
+  }
+
+  function saveSmsraed(form) {
+    const key = el("smsraed-key").value.trim();
+    const base = el("smsraed-base").value.trim();
+    const enabled = el("smsraed-enabled").checked;
+    const btn = form.querySelector('button[type="submit"]');
+    setBtnLoading(btn, true);
+    client()
+      .rpc("admin_smsraed_save", {
+        p_api_key: key || null,
+        p_base_url: base || null,
+        p_enabled: enabled,
+      })
+      .then(function (res) {
+        setBtnLoading(btn, false);
+        if (res.error || !res.data || res.data.ok === false) {
+          fail("تعذّر حفظ إعدادات الربط.");
+          return;
+        }
+        el("smsraed-key").value = "";
+        applySmsraedStatus(res.data);
+        ok("تم حفظ إعدادات ربط SMS RAEED.");
+      });
+  }
+
+  function clearSmsraedKey() {
+    if (!window.confirm("مسح مفتاح SMS RAEED؟ لن يعمل الشحن حتى تضيف مفتاحًا جديدًا.")) return;
+    client()
+      .rpc("admin_smsraed_clear_key")
+      .then(function (res) {
+        if (res.error || !res.data || res.data.ok === false) {
+          fail("تعذّر مسح المفتاح.");
+          return;
+        }
+        applySmsraedStatus(res.data);
+        ok("تم مسح المفتاح.");
+      });
+  }
+
+  function testSmsraed() {
+    const box = el("smsraed-test-result");
+    if (box) box.textContent = "جارٍ اختبار الاتصال…";
+    client()
+      .rpc("admin_smsraed_test")
+      .then(function (res) {
+        if (res.error || !res.data || res.data.ok === false) {
+          const code = res.data && res.data.error;
+          if (box) box.textContent = code === "not_configured" ? "لا يوجد مفتاح مخزَّن." : "تعذّر بدء الاختبار.";
+          return;
+        }
+        const rid = res.data.request_id;
+        let tries = 0;
+        const timer = setInterval(function () {
+          tries++;
+          client()
+            .rpc("admin_smsraed_test_result", { p_id: rid })
+            .then(function (r2) {
+              if (r2 && r2.data && r2.data.found) {
+                clearInterval(timer);
+                if (box) {
+                  box.textContent =
+                    "رمز HTTP: " + r2.data.status_code + "\n" + (r2.data.body || "").slice(0, 400);
+                }
+              } else if (tries >= 8) {
+                clearInterval(timer);
+                if (box) box.textContent = "لم يصل رد بعد. تحقّق من الرابط والمفتاح والحساب على منصة SMS RAEED.";
+              }
+            });
+        }, 700);
+      });
+  }
+
   /* ——— ربط الأحداث ——— */
   function wire() {
     const key = pageKey();
+
+    if (key === "smsraed") {
+      const form = el("smsraed-form");
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          saveSmsraed(form);
+        });
+      }
+      const clear = el("smsraed-clear");
+      if (clear) clear.addEventListener("click", clearSmsraedKey);
+      const test = el("smsraed-test");
+      if (test) test.addEventListener("click", testSmsraed);
+    }
 
     if (key === "providers") {
       const form = el("provider-form");
@@ -779,6 +910,7 @@
     orders: orders,
     recharges: recharges,
     settings: settings,
+    smsraed: refreshSmsraed,
   };
 
   function loadProfiles() {
