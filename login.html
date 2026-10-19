@@ -32,6 +32,7 @@
     <script src="js/config.js" defer></script>
     <script src="js/supabase-client.js" defer></script>
     <script src="js/auth-session.js" defer></script>
+    <script src="js/validation.js" defer></script>
     <script src="js/auth.js" defer></script>
   </head>
   <body>
@@ -70,22 +71,45 @@
         <div class="auth__card">
           <div class="auth__head">
             <h1>تسجيل الدخول</h1>
-            <p>ادخل إلى حسابك ومحفظتك عبر حساب Google.</p>
+            <p>ادخل إلى حسابك ومحفظتك بالبريد الإلكتروني أو بحساب Google.</p>
           </div>
 
-          <div class="alert alert--info" role="note">
-            <span data-icon="info" data-icon-size="20"></span>
-            <div>
-              <p class="alert__title">بلا كلمة مرور</p>
-              <p>
-                نستخدم حساب Google للدخول ولإنشاء الحساب معًا. إن لم يكن لديك
-                حساب فسيُنشأ تلقائيًا عند أول متابعة.
-              </p>
+          <form class="form" id="email-login" novalidate>
+            <div class="field">
+              <label class="field__label" for="login-email">البريد الإلكتروني</label>
+              <input
+                class="input"
+                id="login-email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                dir="ltr"
+                required
+              />
+              <p class="field__error"></p>
             </div>
-          </div>
+            <div class="field">
+              <label class="field__label" for="login-password">كلمة المرور</label>
+              <input
+                class="input"
+                id="login-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+              <p class="field__error"></p>
+            </div>
+            <button class="btn btn--primary btn--block btn--lg mt-4" type="submit">
+              دخول
+            </button>
+          </form>
+
+          <p class="auth__divider">أو</p>
 
           <button
-            class="btn btn--google btn--block btn--lg mt-4"
+            class="btn btn--google btn--block btn--lg"
             id="google-login"
             type="button"
           >

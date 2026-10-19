@@ -357,6 +357,13 @@
   color: var(--color-text-soft);
 }
 
+.auth__divider {
+  text-align: center;
+  margin: var(--space-5) 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .auth__back {
   display: block;
   text-align: center;

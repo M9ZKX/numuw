@@ -13,6 +13,9 @@
   const REDIRECT_AFTER_LOGIN = "wallet.html";
   const PROVIDER = "google";
 
+  const V = window.Validators;
+  const H = window.FormHelpers;
+
   /* يعمل مع النطاق الجذري وأيضًا مع النشر داخل مجلد فرعي (مثل GitHub Pages). */
   function redirectUrl(page) {
     return new URL(page, location.href).href;
@@ -77,8 +80,66 @@
     });
   }
 
+  /* ——— الدخول بالبريد وكلمة المرور ——— */
+  function bindEmailLogin() {
+    const form = document.getElementById("email-login");
+    if (!form) return;
+
+    const email = document.getElementById("login-email");
+    const password = document.getElementById("login-password");
+    if (email) H.attachLiveValidation(email, [V.email]);
+    if (password) H.attachLiveValidation(password, [V.required]);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const check = H.validateForm({
+        "login-email": [V.email],
+        "login-password": [V.required],
+      });
+      if (!check.valid) {
+        if (check.firstInvalid) check.firstInvalid.focus();
+        return;
+      }
+      submitEmailLogin(form, email.value.trim(), password.value);
+    });
+  }
+
+  function submitEmailLogin(form, email, password) {
+    const client = window.SupabaseClient;
+    if (!client || !client.auth) {
+      authUnavailableToast();
+      return;
+    }
+
+    const btn = form.querySelector('button[type="submit"]');
+    setLoading(btn, true);
+
+    client.auth
+      .signInWithPassword({ email: email, password: password })
+      .then(function (res) {
+        setLoading(btn, false);
+        if (res && res.error) {
+          window.UI.toast(
+            "تعذّر تسجيل الدخول. تحقّق من البريد الإلكتروني وكلمة المرور.",
+            { type: "danger", title: "فشل الدخول", duration: 6000 }
+          );
+          return;
+        }
+        window.UI.toast("تم تسجيل الدخول.", {
+          type: "success",
+          duration: 2000,
+        });
+        location.replace(redirectUrl(REDIRECT_AFTER_LOGIN));
+      })
+      .catch(function () {
+        setLoading(btn, false);
+        authUnavailableToast();
+      });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     bindGoogleButton("google-login");
     bindGoogleButton("google-register");
+    bindEmailLogin();
   });
 })();
