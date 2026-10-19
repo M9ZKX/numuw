@@ -13,6 +13,11 @@
   const REDIRECT_AFTER_LOGIN = "wallet.html";
   const PROVIDER = "google";
 
+  /* يعمل مع النطاق الجذري وأيضًا مع النشر داخل مجلد فرعي (مثل GitHub Pages). */
+  function redirectUrl(page) {
+    return new URL(page, location.href).href;
+  }
+
   function setLoading(btn, loading) {
     if (!btn) return;
     if (loading) {
@@ -41,7 +46,7 @@
     }
 
     setLoading(btn, true);
-    const redirectTo = location.origin + "/" + REDIRECT_AFTER_LOGIN;
+    const redirectTo = redirectUrl(REDIRECT_AFTER_LOGIN);
 
     client.auth
       .signInWithOAuth({
