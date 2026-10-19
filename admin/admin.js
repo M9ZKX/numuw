@@ -1,0 +1,812 @@
+/*
+  admin.js
+  نواة منطقة الإدارة:
+  - بناء الشريط الجانبي والشريط العلوي (لتقليل التكرار بين الصفحات).
+  - بوابة صلاحية: تتطلّب جلسة ودور admin، وإلا تعيد التوجيه.
+  - وحدات لكل صفحة تُختار عبر data-page على <body>.
+*/
+
+(function () {
+  "use strict";
+
+  const NAV = [
+    { key: "dashboard", label: "نظرة عامة", file: "index.html", icon: "chart" },
+    { key: "users", label: "المستخدمون", file: "users.html", icon: "user" },
+    { key: "providers", label: "المزوّدون", file: "providers.html", icon: "grid" },
+    { key: "services", label: "الخدمات", file: "services.html", icon: "sparkles" },
+    { key: "orders", label: "الطلبات", file: "orders.html", icon: "bolt" },
+    { key: "recharges", label: "الاستلامات", file: "recharges.html", icon: "wallet" },
+    { key: "settings", label: "الإعدادات", file: "settings.html", icon: "settings" },
+  ];
+
+  const COMPANY_LABEL = { libyana: "ليبيانا", almadar: "المدار" };
+  const ORDER_STATUS = {
+    pending: "قيد الانتظار",
+    processing: "قيد التنفيذ",
+    completed: "مكتمل",
+    canceled: "ملغى",
+    refunded: "مُسترجع",
+  };
+  const RECHARGE_STATUS = {
+    pending: { label: "بانتظار التحقق", cls: "badge--pending" },
+    success: { label: "ناجح", cls: "badge--success" },
+    failed: { label: "فاشل", cls: "badge--failed" },
+    cancelled: { label: "ملغى", cls: "badge--muted" },
+    needs_review: { label: "يحتاج مراجعة", cls: "badge--review" },
+  };
+
+  const profilesMap = {};
+  let servicesMap = {};
+  let sideBuilt = false;
+  let started = false;
+
+  /* ——— أدوات ——— */
+  function client() {
+    return window.SupabaseClient;
+  }
+  function el(id) {
+    return document.getElementById(id);
+  }
+  function uid() {
+    return window.AppSession && window.AppSession.user
+      ? window.AppSession.user.id
+      : null;
+  }
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmt(value) {
+    return Number(value || 0)
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    const p = (n) => String(n).padStart(2, "0");
+    return (
+      d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) +
+      " " + p(d.getHours()) + ":" + p(d.getMinutes())
+    );
+  }
+  function fail(msg) {
+    window.UI.toast(msg, { type: "danger" });
+  }
+  function ok(msg) {
+    window.UI.toast(msg, { type: "success" });
+  }
+  function soon(msg) {
+    window.UI.toast(msg || "هذه الميزة ستُفعّل قريبًا.", {
+      type: "info",
+      title: "قريبًا",
+    });
+  }
+  function userEmail(id) {
+    const p = profilesMap[id];
+    return p ? p.email || p.full_name || id : id;
+  }
+  function pageKey() {
+    return document.body.getAttribute("data-page") || "dashboard";
+  }
+
+  /* ——— الهيكل ——— */
+  function buildShell() {
+    const side = el("admin-side");
+    if (side && !sideBuilt) {
+      sideBuilt = true;
+      const brand = document.createElement("a");
+      brand.className = "admin__brand";
+      brand.href = "../index.html";
+      brand.innerHTML =
+        '<img src="../assets/logo.svg" alt="" />' +
+        '<span class="admin__unit"><strong>منصة نمو</strong><small>ADMIN</small></span>';
+      side.appendChild(brand);
+
+      const nav = document.createElement("nav");
+      nav.className = "admin__nav";
+      const key = pageKey();
+      NAV.forEach(function (item) {
+        const a = document.createElement("a");
+        a.href = item.file;
+        if (item.key === key) a.className = "is-active";
+        const icon = document.createElement("span");
+        icon.setAttribute("data-icon", item.icon);
+        icon.setAttribute("data-icon-size", "18");
+        const label = document.createElement("span");
+        label.textContent = item.label;
+        a.appendChild(icon);
+        a.appendChild(label);
+        nav.appendChild(a);
+      });
+      side.appendChild(nav);
+      if (window.Icons && window.Icons.hydrateIcons) window.Icons.hydrateIcons(side);
+    }
+
+    const top = el("admin-top");
+    if (top) {
+      top.innerHTML = "";
+      const current = NAV.filter(function (n) { return n.key === pageKey(); })[0];
+      const h1 = document.createElement("h1");
+      h1.textContent = current ? current.label : "لوحة الإدارة";
+      top.appendChild(h1);
+
+      const box = document.createElement("div");
+      box.className = "admin__user";
+      const user = window.AppSession && window.AppSession.user;
+      const who = document.createElement("span");
+      who.textContent =
+        window.AppAuth && user ? window.AppAuth.displayName(user) : "—";
+      const out = document.createElement("button");
+      out.className = "btn btn--outline btn--sm";
+      out.type = "button";
+      out.textContent = "خروج";
+      out.addEventListener("click", function () {
+        if (window.AppAuth) window.AppAuth.signOut();
+      });
+      box.appendChild(who);
+      box.appendChild(out);
+      top.appendChild(box);
+    }
+  }
+
+  /* ——— بوابة الصلاحية ——— */
+  function guard() {
+    return new Promise(function (resolve) {
+      const c = client();
+      const session = window.AppSession && window.AppSession.session;
+      function denyUser() {
+        location.replace("../wallet.html");
+      }
+      if (!session) {
+        location.replace("../login.html");
+        resolve(false);
+        return;
+      }
+      const role = window.AppSession.role;
+      if (role) {
+        if (role !== "admin") { denyUser(); resolve(false); return; }
+        resolve(true);
+        return;
+      }
+      c.from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle()
+        .then(function (res) {
+          const r = res && res.data ? res.data.role : null;
+          window.AppSession.role = r;
+          if (r !== "admin") { denyUser(); resolve(false); return; }
+          resolve(true);
+        })
+        .catch(function () {
+          denyUser();
+          resolve(false);
+        });
+    });
+  }
+
+  /* ——— نظرة عامة ——— */
+  function dashboard() {
+    const c = client();
+    const set = function (id, value) {
+      const node = el(id);
+      if (node) node.textContent = value;
+    };
+    Promise.all([
+      c.from("profiles").select("*", { count: "exact", head: true }),
+      c.from("providers").select("*", { count: "exact", head: true }),
+      c.from("services").select("*", { count: "exact", head: true }),
+      c.from("orders").select("*", { count: "exact", head: true }),
+      c.from("recharges").select("*", { count: "exact", head: true }).in("status", ["pending", "needs_review"]),
+    ]).then(function (r) {
+      set("stat-users", r[0].count == null ? "—" : r[0].count);
+      set("stat-providers", r[1].count == null ? "—" : r[1].count);
+      set("stat-services", r[2].count == null ? "—" : r[2].count);
+      set("stat-orders", r[3].count == null ? "—" : r[3].count);
+      set("stat-recharges", r[4].count == null ? "—" : r[4].count);
+    });
+
+    const body = el("recent-orders-body");
+    if (body) {
+      c.from("orders")
+        .select("id, user_id, service_id, quantity, charge, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8)
+        .then(function (res) {
+          const rows = (res && res.data) || [];
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="5">لا توجد طلبات بعد.</td></tr>';
+            return;
+          }
+          body.innerHTML = rows
+            .map(function (o) {
+              const meta = ORDER_STATUS[o.status] || o.status;
+              return (
+                "<tr>" +
+                "<td>" + o.id + "</td>" +
+                "<td>" + escapeHtml(userEmail(o.user_id)) + "</td>" +
+                "<td>" + o.quantity + "</td>" +
+                "<td>" + fmt(o.charge) + "</td>" +
+                "<td>" + escapeHtml(meta) + "</td>" +
+                "</tr>"
+              );
+            })
+            .join("");
+        });
+    }
+  }
+
+  /* ——— المستخدمون ——— */
+  function users() {
+    const c = client();
+    const tbody = el("users-body");
+    if (!tbody) return;
+
+    c.from("profiles")
+      .select("id, email, full_name, role, created_at")
+      .order("created_at", { ascending: false })
+      .then(function (pRes) {
+        const rows = (pRes && pRes.data) || [];
+        return c.from("wallets").select("user_id, balance").then(function (wRes) {
+          const balances = {};
+          ((wRes && wRes.data) || []).forEach(function (w) {
+            balances[w.user_id] = w.balance;
+          });
+          if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="5">لا يوجد مستخدمون بعد.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = rows
+            .map(function (p) {
+              const roleCls = p.role === "admin" ? "badge--success" : "badge--muted";
+              const roleLabel = p.role === "admin" ? "مشرف" : "مستخدم";
+              return (
+                '<tr data-id="' + p.id + '">' +
+                "<td>" + escapeHtml(p.full_name || "—") + "</td>" +
+                '<td dir="ltr">' + escapeHtml(p.email || "—") + "</td>" +
+                '<td><span class="badge ' + roleCls + '">' + roleLabel + "</span></td>" +
+                "<td>" + fmt(balances[p.id]) + " د.ل</td>" +
+                "<td>" +
+                '<input class="input js-amount" type="number" step="0.01" dir="ltr" style="max-width:110px;display:inline-block" placeholder="0.00" aria-label="المبلغ" /> ' +
+                '<button class="btn btn--outline btn--sm" type="button" data-act="adjust">تطبيق</button>' +
+                "</td>" +
+                "</tr>"
+              );
+            })
+            .join("");
+        });
+      });
+  }
+
+  function adjustBalance(userId, raw) {
+    const amount = Number(raw);
+    if (!raw || isNaN(amount) || amount === 0) {
+      window.UI.toast("أدخل مبلغًا صحيحًا غير صفري.", { type: "warning" });
+      return;
+    }
+    client()
+      .rpc("admin_adjust_balance", { p_user: userId, p_amount: amount })
+      .then(function (res) {
+        if (res.error || (res.data && res.data.ok === false)) {
+          fail("تعذّر تعديل الرصيد.");
+          return;
+        }
+        ok("تم تحديث الرصيد.");
+        users();
+      });
+  }
+
+  /* ——— المزوّدون ——— */
+  function providers() {
+    const c = client();
+    const tbody = el("providers-body");
+    if (!tbody) return;
+    c.from("providers")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("id", { ascending: true })
+      .then(function (res) {
+        if (res.error) {
+          tbody.innerHTML = '<tr><td colspan="5">تعذّر تحميل المزوّدين.</td></tr>';
+          return;
+        }
+        const rows = res.data || [];
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="5">لا يوجد مزوّدون بعد. أضف أول مزوّد من الأعلى.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows
+          .map(function (p) {
+            return (
+              '<tr data-id="' + p.id + '">' +
+              '<td><input class="input js-name" type="text" value="' + escapeHtml(p.name) + '" style="max-width:160px" /></td>' +
+              '<td><input class="input js-url" type="url" dir="ltr" value="' + escapeHtml(p.api_url || "") + '" style="max-width:220px" placeholder="https://..." /></td>' +
+              '<td><input class="input js-key" type="password" dir="ltr" value="' + escapeHtml(p.api_key || "") + '" style="max-width:180px" placeholder="API key" autocomplete="off" /></td>' +
+              "<td>" + fmt(p.balance) + "</td>" +
+              '<td><input type="checkbox" class="js-active" ' + (p.is_active ? "checked" : "") + " /></td>" +
+              "<td>" +
+              '<button class="btn btn--outline btn--sm" type="button" data-act="save-provider">حفظ</button> ' +
+              '<button class="btn btn--ghost btn--sm" type="button" data-act="del-provider">حذف</button>' +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      });
+  }
+
+  function addProvider(form) {
+    const name = el("prov-name").value.trim();
+    const url = el("prov-url").value.trim();
+    const key = el("prov-key").value.trim();
+    if (!name) {
+      window.UI.toast("أدخل اسم المزوّد.", { type: "warning" });
+      return;
+    }
+    client()
+      .from("providers")
+      .insert({ name: name, api_url: url || null, api_key: key || null, is_active: true })
+      .then(function (res) {
+        if (res.error) { fail("تعذّر إضافة المزوّد."); return; }
+        form.reset();
+        ok("تمت إضافة المزوّد.");
+        providers();
+      });
+  }
+
+  function saveProvider(id, row) {
+    const patch = {
+      name: row.querySelector(".js-name").value.trim(),
+      api_url: row.querySelector(".js-url").value.trim() || null,
+      api_key: row.querySelector(".js-key").value.trim() || null,
+      is_active: row.querySelector(".js-active").checked,
+    };
+    if (!patch.name) { window.UI.toast("اسم المزوّد مطلوب.", { type: "warning" }); return; }
+    client()
+      .from("providers")
+      .update(patch)
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حفظ المزوّد."); return; }
+        ok("تم حفظ المزوّد.");
+      });
+  }
+
+  function deleteProvider(id) {
+    if (!window.confirm("حذف هذا المزوّد؟")) return;
+    client()
+      .from("providers")
+      .delete()
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حذف المزوّد."); return; }
+        ok("تم حذف المزوّد.");
+        providers();
+      });
+  }
+
+  /* ——— الخدمات ——— */
+  function services() {
+    const c = client();
+    const tbody = el("services-body");
+    if (!tbody) return;
+    Promise.all([
+      c.from("services").select("*").order("category", { ascending: true }).order("sort_order", { ascending: true }),
+      c.from("providers").select("id, name"),
+    ]).then(function (r) {
+      const provName = {};
+      ((r[1] && r[1].data) || []).forEach(function (p) { provName[p.id] = p.name; });
+      servicesMap = {};
+      const rows = (r[0] && r[0].data) || [];
+      rows.forEach(function (s) { servicesMap[s.id] = s; });
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7">لا توجد خدمات بعد. تُستورد من المزوّدين عبر المزامنة.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows
+        .map(function (s) {
+          const provider = s.provider_id ? (provName[s.provider_id] || "—") : "—";
+          return (
+            '<tr data-id="' + s.id + '">' +
+            "<td>" + escapeHtml(s.name) + "</td>" +
+            '<td dir="ltr">' + escapeHtml(s.category || "—") + "</td>" +
+            "<td>" + escapeHtml(provider) + "</td>" +
+            '<td><input class="input js-rate" type="number" step="0.0001" min="0" dir="ltr" style="max-width:110px" value="' + s.rate + '" /></td>' +
+            '<td><input class="input js-markup" type="number" step="0.01" dir="ltr" style="max-width:90px" value="' + (s.markup == null ? 0 : s.markup) + '" /></td>' +
+            '<td><input type="checkbox" class="js-active" ' + (s.is_active ? "checked" : "") + " /></td>" +
+            "<td>" +
+            '<button class="btn btn--outline btn--sm" type="button" data-act="save-service">حفظ</button> ' +
+            '<button class="btn btn--ghost btn--sm" type="button" data-act="del-service">حذف</button>' +
+            "</td>" +
+            "</tr>"
+          );
+        })
+        .join("");
+    });
+  }
+
+  function saveService(id, row) {
+    const patch = {
+      rate: Number(row.querySelector(".js-rate").value),
+      markup: Number(row.querySelector(".js-markup").value) || 0,
+      is_active: row.querySelector(".js-active").checked,
+    };
+    client()
+      .from("services")
+      .update(patch)
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حفظ الخدمة."); return; }
+        ok("تم حفظ الخدمة.");
+      });
+  }
+
+  function deleteService(id) {
+    if (!window.confirm("حذف هذه الخدمة؟")) return;
+    client()
+      .from("services")
+      .delete()
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حذف الخدمة."); return; }
+        ok("تم حذف الخدمة.");
+        services();
+      });
+  }
+
+  /* ——— الطلبات ——— */
+  function orders() {
+    const c = client();
+    const tbody = el("orders-body");
+    if (!tbody) return;
+    c.from("orders")
+      .select("id, user_id, service_id, quantity, charge, status, target, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .then(function (res) {
+        const rows = (res && res.data) || [];
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="7">لا توجد طلبات بعد.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows
+          .map(function (o) {
+            const svc = servicesMap[o.service_id];
+            const options = Object.keys(ORDER_STATUS)
+              .map(function (k) {
+                return '<option value="' + k + '"' + (o.status === k ? " selected" : "") + ">" + ORDER_STATUS[k] + "</option>";
+              })
+              .join("");
+            return (
+              '<tr data-id="' + o.id + '">' +
+              "<td>" + o.id + "</td>" +
+              "<td>" + escapeHtml(userEmail(o.user_id)) + "</td>" +
+              "<td>" + escapeHtml(svc ? svc.name : "—") + "</td>" +
+              "<td>" + o.quantity + "</td>" +
+              "<td>" + fmt(o.charge) + "</td>" +
+              '<td dir="ltr" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(o.target) + "</td>" +
+              '<td><select class="select js-order-status">' +
+              Object.keys(ORDER_STATUS).map(function (k) {
+                return '<option value="' + k + '"' + (o.status === k ? " selected" : "") + ">" + ORDER_STATUS[k] + "</option>";
+              }).join("") +
+              "</select></td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      });
+  }
+
+  function updateOrderStatus(id, status) {
+    client()
+      .from("orders")
+      .update({ status: status })
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر تحديث حالة الطلب."); return; }
+        ok("تم تحديث حالة الطلب.");
+      });
+  }
+
+  /* ——— الاستلامات (recharges) ——— */
+  function recharges() {
+    const c = client();
+    const tbody = el("recharges-body");
+    if (!tbody) return;
+    c.from("recharges")
+      .select("id, user_id, company, sender_phone, amount, status, credited, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .then(function (res) {
+        if (res.error) {
+          tbody.innerHTML = '<tr><td colspan="8">تعذّر تحميل الاستلامات.</td></tr>';
+          return;
+        }
+        const rows = res.data || [];
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="8">لا توجد استلامات بعد.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows
+          .map(function (r) {
+            const meta = RECHARGE_STATUS[r.status] || { label: r.status, cls: "badge--muted" };
+            const credited = r.credited
+              ? '<span class="badge badge--success">نعم</span>'
+              : '<span class="badge badge--muted">لا</span>';
+            const dis = r.credited ? " disabled" : "";
+            return (
+              '<tr data-id="' + r.id + '">' +
+              "<td>" + r.id + "</td>" +
+              "<td>" + escapeHtml(userEmail(r.user_id)) + "</td>" +
+              "<td>" + (COMPANY_LABEL[r.company] || r.company) + "</td>" +
+              '<td dir="ltr">' + escapeHtml(r.sender_phone) + "</td>" +
+              "<td>" + fmt(r.amount) + "</td>" +
+              '<td><span class="badge ' + meta.cls + '">' + meta.label + "</span></td>" +
+              "<td>" + credited + "</td>" +
+              "<td>" +
+              '<button class="btn btn--primary btn--sm" type="button" data-act="approve"' + dis + ">اعتماد</button> " +
+              '<button class="btn btn--outline btn--sm" type="button" data-act="review"' + dis + ">مراجعة</button> " +
+              '<button class="btn btn--ghost btn--sm" type="button" data-act="reject"' + dis + ">رفض</button>" +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      });
+  }
+
+  function rechargeAction(id, action) {
+    client()
+      .rpc("admin_recharge_action", { p_id: Number(id), p_action: action })
+      .then(function (res) {
+        if (res.error || (res.data && res.data.ok === false)) {
+          fail("تعذّر تنفيذ العملية.");
+          return;
+        }
+        ok("تم تحديث الاستلام.");
+        recharges();
+      });
+  }
+
+  /* ——— الإعدادات: أرقام الاستقبال ——— */
+  function settings() {
+    const c = client();
+    const tbody = el("receivers-body");
+    if (!tbody) return;
+    c.from("wallet_receivers")
+      .select("id, company, phone, is_active, sort_order")
+      .order("company", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .then(function (res) {
+        if (res.error) {
+          tbody.innerHTML = '<tr><td colspan="5">تعذّر تحميل الأرقام.</td></tr>';
+          return;
+        }
+        const rows = res.data || [];
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="5">لا توجد أرقام استقبال بعد.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows
+          .map(function (r) {
+            return (
+              '<tr data-id="' + r.id + '">' +
+              "<td>" + (COMPANY_LABEL[r.company] || r.company) + "</td>" +
+              '<td><input class="input js-phone" type="tel" dir="ltr" style="max-width:150px" value="' + escapeHtml(r.phone) + '" /></td>' +
+              '<td><input class="input js-sort" type="number" step="1" dir="ltr" style="max-width:80px" value="' + (r.sort_order == null ? 0 : r.sort_order) + '" /></td>' +
+              '<td><input type="checkbox" class="js-active" ' + (r.is_active ? "checked" : "") + " /></td>" +
+              "<td>" +
+              '<button class="btn btn--outline btn--sm" type="button" data-act="save-receiver">حفظ</button> ' +
+              '<button class="btn btn--ghost btn--sm" type="button" data-act="del-receiver">حذف</button>' +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      });
+  }
+
+  function addReceiver(form) {
+    const company = el("rcv-company").value;
+    const phone = el("rcv-phone").value.trim();
+    if (window.Validators && window.Validators.lyPhone(phone) !== true) {
+      window.UI.toast("أدخل رقمًا ليبيًا صحيحًا يبدأ بـ 09 (10 أرقام).", { type: "warning" });
+      return;
+    }
+    client()
+      .from("wallet_receivers")
+      .insert({ company: company, phone: phone, is_active: true, sort_order: 0 })
+      .then(function (res) {
+        if (res.error) { fail("تعذّر إضافة الرقم."); return; }
+        el("receiver-form").reset();
+        ok("تمت إضافة رقم الاستقبال.");
+        settings();
+      });
+  }
+
+  function saveReceiver(id, row) {
+    const phone = row.querySelector(".js-phone").value.trim();
+    if (window.Validators && window.Validators.lyPhone(phone) !== true) {
+      window.UI.toast("رقم غير صحيح.", { type: "warning" });
+      return;
+    }
+    const patch = {
+      phone: phone,
+      sort_order: Number(row.querySelector(".js-sort").value) || 0,
+      is_active: row.querySelector(".js-active").checked,
+    };
+    client()
+      .from("wallet_receivers")
+      .update(patch)
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حفظ الرقم."); return; }
+        ok("تم حفظ الرقم.");
+      });
+  }
+
+  function deleteReceiver(id) {
+    if (!window.confirm("حذف رقم الاستقبال هذا؟")) return;
+    client()
+      .from("wallet_receivers")
+      .delete()
+      .eq("id", id)
+      .then(function (res) {
+        if (res.error) { fail("تعذّر حذف الرقم."); return; }
+        ok("تم حذف الرقم.");
+        settings();
+      });
+  }
+
+  /* ——— ربط الأحداث ——— */
+  function wire() {
+    const key = pageKey();
+
+    if (key === "providers") {
+      const form = el("provider-form");
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          addProvider(form);
+        });
+      }
+      const sync = el("providers-sync");
+      if (sync) {
+        sync.addEventListener("click", function () {
+          soon("مزامنة الخدمات من المزوّدين ستُفعّل عند ربط الـAPI.");
+        });
+      }
+      const tbody = el("providers-body");
+      if (tbody) {
+        tbody.addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-act]");
+          if (!btn) return;
+          const row = btn.closest("tr");
+          const id = Number(row.getAttribute("data-id"));
+          if (btn.getAttribute("data-act") === "save-provider") saveProvider(id, row);
+          else if (btn.getAttribute("data-act") === "del-provider") deleteProvider(id);
+        });
+      }
+    }
+
+    if (key === "users") {
+      const tbody = el("users-body");
+      if (tbody) {
+        tbody.addEventListener("click", function (e) {
+          const btn = e.target.closest('[data-act="adjust"]');
+          if (!btn) return;
+          const row = btn.closest("tr");
+          adjustBalance(row.getAttribute("data-id"), row.querySelector(".js-amount").value);
+        });
+      }
+    }
+
+    if (key === "services") {
+      const tbody = el("services-body");
+      if (tbody) {
+        tbody.addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-act]");
+          if (!btn) return;
+          const row = btn.closest("tr");
+          const id = Number(row.getAttribute("data-id"));
+          if (btn.getAttribute("data-act") === "save-service") saveService(id, row);
+          else if (btn.getAttribute("data-act") === "del-service") deleteService(id);
+        });
+      }
+      const sync = el("services-sync");
+      if (sync) {
+        sync.addEventListener("click", function () {
+          soon("المزامنة ستُفعّل عند ربط الـAPI.");
+        });
+      }
+    }
+
+    if (key === "orders") {
+      const tbody = el("orders-body");
+      if (tbody) {
+        tbody.addEventListener("change", function (e) {
+          const sel = e.target.closest(".js-order-status");
+          if (!sel) return;
+          updateOrderStatus(Number(sel.closest("tr").getAttribute("data-id")), sel.value);
+        });
+      }
+    }
+
+    if (key === "recharges") {
+      const tbody = el("recharges-body");
+      if (tbody) {
+        tbody.addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-act]");
+          if (!btn || btn.disabled) return;
+          const act = btn.getAttribute("data-act");
+          if (act === "approve" || act === "review" || act === "reject") {
+            rechargeAction(Number(btn.closest("tr").getAttribute("data-id")), act);
+          }
+        });
+      }
+    }
+
+    if (key === "settings") {
+      const form = el("receiver-form");
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          addReceiver(form);
+        });
+      }
+      const tbody = el("receivers-body");
+      if (tbody) {
+        tbody.addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-act]");
+          if (!btn) return;
+          const row = btn.closest("tr");
+          const id = Number(row.getAttribute("data-id"));
+          if (btn.getAttribute("data-act") === "save-receiver") saveReceiver(id, row);
+          else if (btn.getAttribute("data-act") === "del-receiver") deleteReceiver(id);
+        });
+      }
+    }
+  }
+
+  const MODULES = {
+    dashboard: dashboard,
+    users: users,
+    providers: providers,
+    services: services,
+    orders: orders,
+    recharges: recharges,
+    settings: settings,
+  };
+
+  function loadProfiles() {
+    return client()
+      .from("profiles")
+      .select("id, email, full_name")
+      .then(function (res) {
+        ((res && res.data) || []).forEach(function (p) {
+          profilesMap[p.id] = p;
+        });
+      })
+      .catch(function () {});
+  }
+
+  function start() {
+    if (started) return;
+    started = true;
+    buildShell();
+    wire();
+    guard().then(function (allowed) {
+      if (!allowed) return;
+      loadProfiles().then(function () {
+        const run = MODULES[pageKey()];
+        if (run) run();
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", buildShell);
+  document.addEventListener("session:changed", start);
+})();

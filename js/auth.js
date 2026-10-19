@@ -129,12 +129,36 @@
           type: "success",
           duration: 2000,
         });
-        location.replace(redirectUrl(REDIRECT_AFTER_LOGIN));
+        landingFor(client, res && res.data ? res.data.user : null);
       })
       .catch(function () {
         setLoading(btn, false);
         authUnavailableToast();
       });
+  }
+
+  /* يوجّه المشرف إلى لوحة الإدارة، والعميل إلى المحفظة. */
+  function landingFor(client, user) {
+    const toWallet = function () {
+      location.replace(redirectUrl("wallet.html"));
+    };
+    if (!client || !user) {
+      toWallet();
+      return;
+    }
+    client
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(function (res) {
+        if (res && res.data && res.data.role === "admin") {
+          location.replace(redirectUrl("admin/index.html"));
+        } else {
+          toWallet();
+        }
+      })
+      .catch(toWallet);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

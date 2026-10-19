@@ -4,8 +4,12 @@
 
   مسؤوليات هذا الملف:
   - معرفة ما إذا كان هناك جلسة نشطة (عبر عميل Supabase).
-  - تحويل مجموعة روابط الدخول في الترويسة إلى هوية المستخدم مع زر خروج.
-  - حماية الصفحات الخاصة (المحفظة والإعدادات) بإعادة الزائر إلى صفحة الدخول.
+  - تمييز دور المستخدم (user / admin) عبر window.AppSession.role.
+  - تحويل روابط الدخول في الترويسة إلى هوية المستخدم مع زر خروج.
+  - حماية الصفحات الخاصة وإعادة التوجيه حسب الدور:
+      • زائر غير مسجّل → login.html
+      • مشرف على صفحات العميل → admin/index.html
+      • عميل داخل منطقة admin/ → wallet.html
   - تزويذ باقي الوحدات بجلسة المستخدم عبر window.AppSession.
 
   لا يُنفّذ تسجيل الدخول أو إنشاء الحساب هنا؛ ذلك في auth.js.
@@ -14,21 +18,28 @@
 (function () {
   "use strict";
 
-  const PRIVATE_PAGES = ["wallet.html", "settings.html", "admin.html"];
+  const PRIVATE_PAGES = ["wallet.html", "settings.html"];
+  const AUTH_PAGES = ["login.html", "register.html"];
 
   window.AppSession = {
     user: null,
     session: null,
+    role: null,
     ready: false,
   };
 
-  /* ——— أدوات ——— */
+  /* ——— أدوات المسار ——— */
   function pageName() {
     return location.pathname.split("/").pop() || "index.html";
   }
-
+  function inAdmin() {
+    return /\/admin(\/|$)/.test(location.pathname);
+  }
+  function base() {
+    return inAdmin() ? "../" : "";
+  }
   function isPrivatePage() {
-    return PRIVATE_PAGES.indexOf(pageName()) !== -1;
+    return inAdmin() || PRIVATE_PAGES.indexOf(pageName()) !== -1;
   }
 
   function displayName(user) {
@@ -49,8 +60,8 @@
     if (!state.authenticated) {
       actions.removeAttribute("data-auth");
       actions.innerHTML =
-        '<a class="btn btn--ghost" href="login.html">تسجيل الدخول</a>' +
-        '<a class="btn btn--primary" href="register.html">إنشاء حساب</a>';
+        '<a class="btn btn--ghost" href="' + base() + 'login.html">تسجيل الدخول</a>' +
+        '<a class="btn btn--primary" href="' + base() + 'register.html">إنشاء حساب</a>';
       return;
     }
 
@@ -59,7 +70,7 @@
 
     const account = document.createElement("a");
     account.className = "btn btn--ghost nav__account";
-    account.href = "settings.html";
+    account.href = base() + "settings.html";
     account.innerHTML = "";
     const icon = document.createElement("span");
     icon.setAttribute("data-icon", "user");
@@ -80,9 +91,6 @@
     outLabel.textContent = "خروج";
     out.appendChild(outIcon);
     out.appendChild(outLabel);
-    out.addEventListener("click", function () {
-      signOut();
-    });
 
     actions.appendChild(account);
     actions.appendChild(out);
@@ -92,117 +100,123 @@
     }
   }
 
-  /* ——— رابط الإدارة (للمشرفين فقط) ——— */
+  /* ——— رابط الإدارة في الترويسة (للمشرف فقط) ——— */
   function syncAdminLink() {
-    const list = document.querySelector(".nav__links");
-    if (!list) return;
+    const links = document.querySelector(".nav__links");
+    if (!links) return;
+    const existing = links.querySelector('[data-auth="admin"]');
+    if (existing) existing.remove();
+    if (!window.AppSession.session || window.AppSession.role !== "admin") return;
 
-    const session = window.AppSession.session;
-    const existing = list.querySelector("[data-admin-link]");
+    const a = document.createElement("a");
+    a.className = "nav__link";
+    a.setAttribute("data-auth", "admin");
+    a.href = base() + "admin/index.html";
+    a.textContent = "الإدارة";
+    links.appendChild(a);
+  }
 
-    if (!session || !window.SupabaseClient) {
-      if (existing) existing.remove();
-      return;
+  /* ——— جلب الدور ——— */
+  function resolveRole(session) {
+    const c = window.SupabaseClient;
+    if (!session || !c) {
+      window.AppSession.role = null;
+      return Promise.resolve(null);
     }
-
-    window.SupabaseClient.from("profiles")
+    return c
+      .from("profiles")
       .select("role")
       .eq("id", session.user.id)
       .maybeSingle()
       .then(function (res) {
-        const isAdmin =
-          res && !res.error && res.data && res.data.role === "admin";
-        const current = list.querySelector("[data-admin-link]");
-        if (isAdmin && !current) {
-          const li = document.createElement("li");
-          li.setAttribute("data-admin-link", "");
-          const a = document.createElement("a");
-          a.className = "nav__link";
-          a.href = "admin.html";
-          a.textContent = "الإدارة";
-          li.appendChild(a);
-          list.appendChild(li);
-        } else if (!isAdmin && current) {
-          current.remove();
-        }
+        window.AppSession.role = res && res.data ? res.data.role : null;
+        return window.AppSession.role;
+      })
+      .catch(function () {
+        window.AppSession.role = null;
+        return null;
       });
+  }
+
+  /* ——— توجيه حسب الحالة والدور ——— */
+  function route() {
+    const session = window.AppSession.session;
+    const name = pageName();
+
+    if (!session) {
+      if (isPrivatePage()) location.replace(base() + "login.html");
+      return;
+    }
+
+    if (window.AppSession.role === "admin") {
+      if (inAdmin()) return;
+      if (PRIVATE_PAGES.indexOf(name) !== -1 || AUTH_PAGES.indexOf(name) !== -1) {
+        location.replace(base() + "admin/index.html");
+      }
+      return;
+    }
+
+    if (inAdmin()) location.replace("../wallet.html");
   }
 
   /* ——— تسجيل الخروج ——— */
   function signOut() {
-    const client = window.SupabaseClient;
+    const c = window.SupabaseClient;
     const finish = function () {
       window.AppSession.user = null;
       window.AppSession.session = null;
+      window.AppSession.role = null;
       renderNav({ authenticated: false });
       syncAdminLink();
       if (window.UI) {
-        window.UI.toast("تم تسجيل الخروج من حسابك.", {
-          type: "info",
-          title: "خروج",
-        });
+        window.UI.toast("تم تسجيل الخروج من حسابك.", { type: "info", title: "خروج" });
       }
-      if (isPrivatePage()) {
-        location.replace("login.html");
-      }
+      location.replace(base() + "login.html");
     };
-
-    if (!client || !client.auth) {
+    if (!c || !c.auth) {
       finish();
       return;
     }
-
-    client.auth.signOut().then(finish).catch(finish);
+    c.auth.signOut().then(finish).catch(finish);
   }
 
-  /* ——— حماية الصفحات الخاصة ——— */
-  function guardPrivatePage() {
-    if (!isPrivatePage()) return;
-    if (window.AppSession.user) return;
-    location.replace("login.html");
+  /* ——— مزامنة كاملة بعد معرفة الجلسة ——— */
+  function apply(session) {
+    window.AppSession.session = session || null;
+    window.AppSession.user = session ? session.user : null;
+    window.AppSession.ready = true;
+    return resolveRole(session).then(function () {
+      renderNav({ authenticated: Boolean(session), user: session && session.user });
+      syncAdminLink();
+      route();
+      document.dispatchEvent(
+        new CustomEvent("session:changed", { detail: window.AppSession })
+      );
+    });
   }
 
   /* ——— بدء التتبع ——— */
   function start() {
-    const client = window.SupabaseClient;
-    if (!client || !client.auth) return;
-
-    client.auth.getSession().then(function (res) {
-      const session = res && res.data ? res.data.session : null;
-      window.AppSession.session = session || null;
-      window.AppSession.user = session ? session.user : null;
-      window.AppSession.ready = true;
-      renderNav({ authenticated: Boolean(session), user: session && session.user });
-      guardPrivatePage();
-      syncAdminLink();
-      document.dispatchEvent(
-        new CustomEvent("session:changed", { detail: window.AppSession })
-      );
+    const c = window.SupabaseClient;
+    if (!c || !c.auth) return;
+    c.auth.getSession().then(function (res) {
+      apply(res && res.data ? res.data.session : null);
     });
-
-    client.auth.onAuthStateChange(function (_event, session) {
-      window.AppSession.session = session || null;
-      window.AppSession.user = session ? session.user : null;
-      renderNav({ authenticated: Boolean(session), user: session && session.user });
-      guardPrivatePage();
-      syncAdminLink();
-      document.dispatchEvent(
-        new CustomEvent("session:changed", { detail: window.AppSession })
-      );
+    c.auth.onAuthStateChange(function (_event, session) {
+      apply(session);
     });
   }
 
   document.addEventListener("supabase:ready", start);
-
   document.addEventListener("supabase:unavailable", function () {
     window.AppSession.ready = true;
     renderNav({ authenticated: false });
-    guardPrivatePage();
     syncAdminLink();
+    route();
     document.dispatchEvent(
       new CustomEvent("session:changed", { detail: window.AppSession })
     );
   });
 
-  window.AppAuth = { signOut: signOut, displayName: displayName };
+  window.AppAuth = { signOut: signOut, displayName: displayName, base: base };
 })();
