@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="إعدادات حسابك في منصة نمو — معلومات الحساب وإعدادات الواجهة."
+    />
+    <title>الإعدادات — منصة نمو</title>
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages.css" />
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("numuw-theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <script src="js/icons.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <script src="js/config.js" defer></script>
+    <script src="js/supabase-client.js" defer></script>
+    <script src="js/auth-session.js" defer></script>
+    <script src="js/settings.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">تخطَّ إلى المحتوى الرئيسي</a>
+
+    <noscript>
+      <style>
+        [data-icon] {
+          display: none;
+        }
+      </style>
+      <div class="container" style="padding-top: 1rem">
+        <div class="alert alert--warning" role="alert">
+          <span class="visually-hidden">تنبيه:</span>
+          <div>
+            <p class="alert__title">JavaScript غير مفعّل</p>
+            <p>بعض أزرار الإعدادات تحتاج جافاسكربت للعمل.</p>
+          </div>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- ================= الهيدر ================= -->
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href="index.html">
+          <img
+            class="brand__logo"
+            src="assets/logo.svg"
+            alt=""
+            width="38"
+            height="38"
+          />
+          <span class="brand__name">
+            منصة نمو
+            <small>SMM PANEL</small>
+          </span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-nav"
+          aria-label="فتح القائمة"
+        >
+          <span class="nav-toggle__bars"></span>
+        </button>
+
+        <nav class="nav" id="primary-nav" aria-label="التنقل الرئيسي">
+          <ul class="nav__links">
+            <li><a class="nav__link" href="index.html">الرئيسية</a></li>
+            <li><a class="nav__link" href="wallet.html">المحفظة</a></li>
+            <li><a class="nav__link" href="settings.html">الإعدادات</a></li>
+            <li><a class="nav__link" href="index.html#services">الخدمات</a></li>
+            <li><a class="nav__link" href="index.html#how">كيف يعمل</a></li>
+          </ul>
+          <div class="nav__actions">
+            <a class="btn btn--ghost" href="login.html">تسجيل الدخول</a>
+            <a class="btn btn--primary" href="register.html">إنشاء حساب</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1" class="page">
+      <div class="container">
+        <div class="page-head">
+          <h1>الإعدادات</h1>
+          <p>أدر معلومات حسابك وتفضيلات الواجهة من مكان واحد.</p>
+        </div>
+
+        <div class="settings-layout">
+          <!-- قائمة جانبية -->
+          <nav class="settings-nav" aria-label="أقسام الإعدادات">
+            <a href="#account">معلومات الحساب</a>
+            <a href="#interface">الواجهة</a>
+            <a href="#future">إعدادات مستقبلية</a>
+          </nav>
+
+          <div class="stack">
+            <!-- ============ معلومات الحساب ============ -->
+            <section class="card" id="account">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="user" data-icon-size="20"></span>
+                  معلومات الحساب
+                </h2>
+              </div>
+
+              <hr class="hr" />
+
+              <form class="form" id="account-form" novalidate>
+                <div class="field">
+                  <label class="field__label" for="account-name">
+                    الاسم الكامل
+                  </label>
+                  <input
+                    class="input"
+                    id="account-name"
+                    name="name"
+                    type="text"
+                    autocomplete="name"
+                    value=""
+                  />
+                </div>
+
+                <div class="field">
+                  <label class="field__label" for="account-email">
+                    البريد الإلكتروني
+                  </label>
+                  <input
+                    class="input"
+                    id="account-email"
+                    name="email"
+                    type="email"
+                    inputmode="email"
+                    autocomplete="email"
+                    value=""
+                    dir="ltr"
+                  />
+                  <p class="field__hint">
+                    تغيير البريد يتطلب تأكيدًا عبر خدمة المصادقة (غير مفعّل بعد).
+                  </p>
+                </div>
+
+                <div class="info-list">
+                  <div class="info-list__row">
+                    <span class="info-list__label">معرّف الحساب</span>
+                    <span class="info-list__value" id="account-uid" dir="ltr">—</span>
+                  </div>
+                  <div class="info-list__row">
+                    <span class="info-list__label">تاريخ التسجيل</span>
+                    <span class="info-list__value" id="account-created">—</span>
+                  </div>
+                  <div class="info-list__row">
+                    <span class="info-list__label">حالة الحساب</span>
+                    <span class="info-list__value" id="account-status">
+                      <span class="badge badge--warning">جارٍ التحقق</span>
+                    </span>
+                  </div>
+                </div>
+
+                <button class="btn btn--primary" type="submit">
+                  حفظ التغييرات
+                </button>
+              </form>
+            </section>
+
+            <!-- ============ الواجهة ============ -->
+            <section class="card" id="interface">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="settings" data-icon-size="20"></span>
+                  إعدادات الواجهة
+                </h2>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-row__text">
+                  <strong>الوضع الداكن</strong>
+                  <span>تبديل مظهر الموقع بين الفاتح والداكن.</span>
+                </div>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    id="theme-toggle"
+                    aria-label="تفعيل الوضع الداكن"
+                  />
+                  <span class="switch__track"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-row__text">
+                  <strong>اللغة</strong>
+                  <span>لغة الواجهة الحالية: العربية (RTL).</span>
+                </div>
+                <span class="badge badge--muted">العربية</span>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-row__text">
+                  <strong>تنبيهات البريد الإلكتروني</strong>
+                  <span>إشعارات عند تحديث حالة الطلبات والشحن.</span>
+                </div>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    data-placeholder-control
+                    aria-label="تفعيل تنبيهات البريد الإلكتروني"
+                  />
+                  <span class="switch__track"></span>
+                </label>
+              </div>
+            </section>
+
+            <!-- ============ إعدادات مستقبلية ============ -->
+            <section class="card" id="future">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="sparkles" data-icon-size="20"></span>
+                  إعدادات الحساب المستقبلية
+                </h2>
+              </div>
+
+              <div class="alert alert--info" role="note">
+                <span data-icon="info" data-icon-size="20"></span>
+                <div>
+                  <p class="alert__title">قريبًا</p>
+                  <p>
+                    هذه الأقسام قيد التطوير وستُفعّل في المراحل القادمة.
+                  </p>
+                </div>
+              </div>
+
+              <div class="setting-row mt-4">
+                <div class="setting-row__text">
+                  <strong>تغيير كلمة المرور</strong>
+                  <span>تحديث كلمة مرور الحساب بأمان.</span>
+                </div>
+                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
+                  <span data-icon="lock" data-icon-size="16"></span>
+                  فتح
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-row__text">
+                  <strong>التحقق بخطوتين</strong>
+                  <span>إضافة طبقة حماية إضافية للحساب.</span>
+                </div>
+                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
+                  <span data-icon="shield" data-icon-size="16"></span>
+                  فتح
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-row__text">
+                  <strong>الأجهزة والجلسات</strong>
+                  <span>إدارة الأجهزة المتصلة بحسابك.</span>
+                </div>
+                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
+                  <span data-icon="grid" data-icon-size="16"></span>
+                  فتح
+                </button>
+              </div>
+
+              <div class="mt-4">
+                <button class="btn btn--ghost" type="button" id="logout-btn">
+                  <span data-icon="logout" data-icon-size="18"></span>
+                  تسجيل الخروج
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= الفوتر ================= -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer__grid">
+          <div class="footer__brand">
+            <a class="brand" href="index.html">
+              <img
+                class="brand__logo"
+                src="assets/logo.svg"
+                alt=""
+                width="38"
+                height="38"
+              />
+              <span class="brand__name">
+                منصة نمو
+                <small>SMM PANEL</small>
+              </span>
+            </a>
+            <p class="mt-4">
+              منصّة عربية لخدمات النمو على وسائل التواصل الاجتماعي، بجودة عالية
+              ودعم فني متواصل.
+            </p>
+          </div>
+
+          <div class="footer__col">
+            <h2>الموقع</h2>
+            <ul>
+              <li><a href="index.html">الرئيسية</a></li>
+              <li><a href="index.html#services">الخدمات</a></li>
+              <li><a href="index.html#features">المميزات</a></li>
+              <li><a href="index.html#how">كيف يعمل</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <h2>الحساب</h2>
+            <ul>
+              <li><a href="login.html">تسجيل الدخول</a></li>
+              <li><a href="register.html">إنشاء حساب</a></li>
+              <li><a href="wallet.html">المحفظة</a></li>
+              <li><a href="settings.html">الإعدادات</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <h2>الدعم والسياسات</h2>
+            <ul>
+              <li><a href="#" data-placeholder>مركز المساعدة</a></li>
+              <li><a href="#" data-placeholder>سياسة الخصوصية</a></li>
+              <li><a href="#" data-placeholder>شروط الاستخدام</a></li>
+              <li><a href="#" data-placeholder>تواصل معنا</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer__bottom">
+          <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <div class="footer__badges">
+            <span class="badge badge--muted">ليبيانا</span>
+            <span class="badge badge--muted">المدار</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

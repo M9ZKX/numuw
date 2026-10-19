@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="لوحة إدارة منصة نمو — إدارة المستخدمين والخدمات والطلبات وعمليات الشحن."
+    />
+    <title>لوحة الإدارة — منصة نمو</title>
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages.css" />
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("numuw-theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <script src="js/icons.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <script src="js/config.js" defer></script>
+    <script src="js/supabase-client.js" defer></script>
+    <script src="js/auth-session.js" defer></script>
+    <script src="js/validation.js" defer></script>
+    <script src="js/admin.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">تخطَّ إلى المحتوى الرئيسي</a>
+
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href="index.html">
+          <img class="brand__logo" src="assets/logo.svg" alt="" width="38" height="38" />
+          <span class="brand__name">
+            منصة نمو
+            <small>SMM PANEL</small>
+          </span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-nav"
+          aria-label="فتح القائمة"
+        >
+          <span class="nav-toggle__bars"></span>
+        </button>
+
+        <nav class="nav" id="primary-nav" aria-label="التنقل الرئيسي">
+          <ul class="nav__links">
+            <li><a class="nav__link" href="index.html">الرئيسية</a></li>
+            <li><a class="nav__link" href="wallet.html">المحفظة</a></li>
+            <li><a class="nav__link" href="settings.html">الإعدادات</a></li>
+            <li><a class="nav__link" href="admin.html">الإدارة</a></li>
+          </ul>
+          <div class="nav__actions">
+            <a class="btn btn--ghost" href="login.html">تسجيل الدخول</a>
+            <a class="btn btn--primary" href="register.html">إنشاء حساب</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1" class="page">
+      <div class="container">
+        <div class="page-head">
+          <h1>لوحة الإدارة</h1>
+          <p>إدارة المستخدمين والخدمات والطلبات وعمليات الشحن وأرقام الاستقبال.</p>
+        </div>
+
+        <div class="alert alert--danger" id="admin-denied" role="alert" hidden>
+          <span data-icon="lock" data-icon-size="20"></span>
+          <div>
+            <p class="alert__title">لا تملك صلاحية الوصول</p>
+            <p>
+              هذه الصفحة مخصّصة للمشرفين فقط. إذا كنت المشرف الأول، رقِّ حسابك عبر
+              تنفيذ الأمر التالي في قاعدة البيانات:
+            </p>
+            <p><code dir="ltr">select public.admin_make_admin('your@email.com');</code></p>
+            <p class="mt-4"><a class="btn btn--outline btn--sm" href="index.html">العودة للرئيسية</a></p>
+          </div>
+        </div>
+
+        <div class="settings-layout" id="admin-app" hidden>
+          <nav class="settings-nav" aria-label="أقسام الإدارة">
+            <a href="#overview">نظرة عامة</a>
+            <a href="#users">المستخدمون</a>
+            <a href="#services">الخدمات</a>
+            <a href="#orders">الطلبات</a>
+            <a href="#recharges">عمليات الشحن</a>
+            <a href="#receivers">أرقام الاستقبال</a>
+          </nav>
+
+          <div class="stack">
+            <!-- نظرة عامة -->
+            <section class="card" id="overview">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="chart" data-icon-size="20"></span>
+                  نظرة عامة
+                </h2>
+                <button class="btn btn--outline btn--sm" type="button" id="reload-all">
+                  <span data-icon="bolt" data-icon-size="16"></span>
+                  تحديث
+                </button>
+              </div>
+              <div class="info-list">
+                <div class="info-list__row">
+                  <span class="info-list__label">المستخدمون</span>
+                  <span class="info-list__value" id="stat-users">—</span>
+                </div>
+                <div class="info-list__row">
+                  <span class="info-list__label">الخدمات</span>
+                  <span class="info-list__value" id="stat-services">—</span>
+                </div>
+                <div class="info-list__row">
+                  <span class="info-list__label">الطلبات</span>
+                  <span class="info-list__value" id="stat-orders">—</span>
+                </div>
+                <div class="info-list__row">
+                  <span class="info-list__label">عمليات شحن قيد الانتظار</span>
+                  <span class="info-list__value" id="stat-recharges">—</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- المستخدمون -->
+            <section class="card card--padless" id="users">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="user" data-icon-size="20"></span>
+                  المستخدمون
+                </h2>
+              </div>
+              <span class="table-hint">اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">الاسم</th>
+                      <th scope="col">البريد</th>
+                      <th scope="col">الدور</th>
+                      <th scope="col">الرصيد</th>
+                      <th scope="col">تعديل الرصيد</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- الخدمات -->
+            <section class="card" id="services">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="sparkles" data-icon-size="20"></span>
+                  الخدمات
+                </h2>
+              </div>
+
+              <form class="form" id="service-form" novalidate>
+                <div class="field">
+                  <label class="field__label" for="svc-name">اسم الخدمة</label>
+                  <input class="input" id="svc-name" type="text" required />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="svc-category">التصنيف</label>
+                  <input class="input" id="svc-category" type="text" dir="ltr" placeholder="instagram" required />
+                  <p class="field__hint">معرّف المنصّة بالإنجليزية، مثل: instagram، tiktok، youtube.</p>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="svc-desc">الوصف</label>
+                  <input class="input" id="svc-desc" type="text" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="svc-rate">السعر لكل وحدة (د.ل)</label>
+                  <input class="input" id="svc-rate" type="number" step="0.0001" min="0" dir="ltr" required />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="svc-min">أقل كمية</label>
+                  <input class="input" id="svc-min" type="number" min="1" step="1" dir="ltr" required />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="svc-max">أقصى كمية (اتركه فارغًا بلا حد)</label>
+                  <input class="input" id="svc-max" type="number" min="1" step="1" dir="ltr" />
+                </div>
+                <button class="btn btn--primary" type="submit">إضافة خدمة</button>
+              </form>
+
+              <hr class="hr" />
+
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">الاسم</th>
+                      <th scope="col">التصنيف</th>
+                      <th scope="col">السعر</th>
+                      <th scope="col">الحد الأدنى</th>
+                      <th scope="col">الحد الأقصى</th>
+                      <th scope="col">مفعّلة</th>
+                      <th scope="col">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="services-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- الطلبات -->
+            <section class="card card--padless" id="orders">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="bolt" data-icon-size="20"></span>
+                  الطلبات
+                </h2>
+              </div>
+              <span class="table-hint">اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">المستخدم</th>
+                      <th scope="col">الخدمة</th>
+                      <th scope="col">الكمية</th>
+                      <th scope="col">التكلفة</th>
+                      <th scope="col">الرابط</th>
+                      <th scope="col">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orders-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- عمليات الشحن -->
+            <section class="card card--padless" id="recharges">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="wallet" data-icon-size="20"></span>
+                  عمليات الشحن
+                </h2>
+              </div>
+              <span class="table-hint">اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">المستخدم</th>
+                      <th scope="col">الشركة</th>
+                      <th scope="col">رقم المُرسل</th>
+                      <th scope="col">المبلغ</th>
+                      <th scope="col">الحالة</th>
+                      <th scope="col">مُضاف</th>
+                      <th scope="col">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recharges-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- أرقام الاستقبال -->
+            <section class="card" id="receivers">
+              <div class="card__head">
+                <h2 class="card__title">
+                  <span data-icon="card" data-icon-size="20"></span>
+                  أرقام الاستقبال
+                </h2>
+              </div>
+
+              <form class="form" id="receiver-form" novalidate>
+                <div class="field">
+                  <label class="field__label" for="rcv-company">الشركة</label>
+                  <select class="select" id="rcv-company">
+                    <option value="libyana">ليبيانا</option>
+                    <option value="almadar">المدار</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="rcv-phone">رقم الاستقبال</label>
+                  <input class="input" id="rcv-phone" type="tel" inputmode="numeric" dir="ltr" placeholder="09XXXXXXXX" required />
+                </div>
+                <button class="btn btn--primary" type="submit">إضافة رقم</button>
+              </form>
+
+              <hr class="hr" />
+
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">الشركة</th>
+                      <th scope="col">الرقم</th>
+                      <th scope="col">الترتيب</th>
+                      <th scope="col">فعّال</th>
+                      <th scope="col">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="receivers-body"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer__bottom">
+          <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <div class="footer__badges">
+            <span class="badge badge--muted">لوحة الإدارة</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

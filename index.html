@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="منصة نمو — لوحة خدمات احترافية لزيادة التفاعل والمتابعين على إنستغرام وتيك توك وفيسبوك ويوتيوب."
+    />
+    <title>منصة نمو — خدمات السوشيال ميديا</title>
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages.css" />
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("numuw-theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+    <script src="js/icons.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <script src="js/config.js" defer></script>
+    <script src="js/supabase-client.js" defer></script>
+    <script src="js/auth-session.js" defer></script>
+    <script src="js/services.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">تخطَّ إلى المحتوى الرئيسي</a>
+
+    <noscript>
+      <style>
+        [data-icon] {
+          display: none;
+        }
+
+        [data-reveal] {
+          opacity: 1;
+          transform: none;
+        }
+      </style>
+      <div class="container" style="padding-top: 1rem">
+        <div class="alert alert--warning" role="alert">
+          <span class="visually-hidden">تنبيه:</span>
+          <div>
+            <p class="alert__title">JavaScript غير مفعّل</p>
+            <p>فعّل جافاسكربت من إعدادات المتصفح لعرض المحتوى الكامل.</p>
+          </div>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- ================= الهيدر ================= -->
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href="index.html">
+          <img
+            class="brand__logo"
+            src="assets/logo.svg"
+            alt=""
+            width="38"
+            height="38"
+          />
+          <span class="brand__name">
+            منصة نمو
+            <small>SMM PANEL</small>
+          </span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-nav"
+          aria-label="فتح القائمة"
+        >
+          <span class="nav-toggle__bars"></span>
+        </button>
+
+        <nav class="nav" id="primary-nav" aria-label="التنقل الرئيسي">
+          <ul class="nav__links">
+            <li><a class="nav__link" href="index.html">الرئيسية</a></li>
+            <li><a class="nav__link" href="#services">الخدمات</a></li>
+            <li><a class="nav__link" href="#features">المميزات</a></li>
+            <li><a class="nav__link" href="#how">كيف يعمل</a></li>
+            <li><a class="nav__link" href="wallet.html">المحفظة</a></li>
+          </ul>
+          <div class="nav__actions">
+            <a class="btn btn--ghost" href="login.html">تسجيل الدخول</a>
+            <a class="btn btn--primary" href="register.html">إنشاء حساب</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <!-- ================= الهيرو ================= -->
+      <section class="hero">
+        <div class="container hero__inner">
+          <div class="hero__content">
+            <span class="hero__eyebrow">
+              <span class="dot"></span>
+              منصّة عربية متخصّصة في خدمات النمو
+            </span>
+            <h1>
+              طوّر حضورك على
+              <span class="highlight">السوشيال ميديا</span>
+              بسرعة وأمان
+            </h1>
+            <p class="hero__lead">
+              خدمات متكاملة لزيادة المتابعين والتفاعل والمشاهدات على أشهر
+              المنصّات، بجودة عالية وأسعار مناسبة وواجهة بسيطة تناسب الجميع.
+            </p>
+            <div class="hero__actions">
+              <a class="btn btn--primary btn--lg" href="register.html">
+                ابدأ الآن مجانًا
+              </a>
+              <a class="btn btn--outline btn--lg" href="#services">
+                استعرض الخدمات
+              </a>
+            </div>
+
+            <div class="hero__stats">
+              <div class="stat">
+                <span class="stat__value">+12</span>
+                <span class="stat__label">منصة مدعومة</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">99.9%</span>
+                <span class="stat__label">جهوزية الخدمة</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">24/7</span>
+                <span class="stat__label">دعم فني</span>
+              </div>
+            </div>
+          </div>
+
+          <aside class="hero__panel" aria-label="المنصات المدعومة">
+            <h2>المنصّات المدعومة</h2>
+            <div class="platform-list">
+              <div class="platform-row">
+                <span class="icon-badge" data-icon="instagram"></span>
+                <span class="platform-row__meta">
+                  <strong>إنستغرام</strong>
+                  <span>متابعون · إعجابات · مشاهدات</span>
+                </span>
+                <span class="badge badge--success">متاح</span>
+              </div>
+              <div class="platform-row">
+                <span class="icon-badge" data-icon="tiktok"></span>
+                <span class="platform-row__meta">
+                  <strong>تيك توك</strong>
+                  <span>متابعون · إعجابات · مشاهدات</span>
+                </span>
+                <span class="badge badge--success">متاح</span>
+              </div>
+              <div class="platform-row">
+                <span class="icon-badge" data-icon="youtube"></span>
+                <span class="platform-row__meta">
+                  <strong>يوتيوب</strong>
+                  <span>مشاهدات · مشتركون · ساعات</span>
+                </span>
+                <span class="badge badge--success">متاح</span>
+              </div>
+              <div class="platform-row">
+                <span class="icon-badge" data-icon="facebook"></span>
+                <span class="platform-row__meta">
+                  <strong>فيسبوك</strong>
+                  <span>متابعون · تفاعل · تعليقات</span>
+                </span>
+                <span class="badge badge--success">متاح</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= الخدمات ================= -->
+      <section class="section" id="services">
+        <div class="container">
+          <div class="section__head">
+            <h2>الخدمات المتاحة</h2>
+            <p>
+              اختر الخدمة، أدخل الرابط والكمية، وسيُخصم المبلغ مباشرةً من رصيد
+              محفظتك.
+            </p>
+          </div>
+
+          <div id="services-status" class="alert alert--info" role="note">
+            <span data-icon="info" data-icon-size="20"></span>
+            <div><p>جارٍ تحميل الخدمات…</p></div>
+          </div>
+
+          <div class="feature-grid" id="services-list"></div>
+
+          <div class="empty-state" id="services-empty" hidden>
+            <p>لا توجد خدمات متاحة حاليًا. يرجى المحاولة لاحقًا.</p>
+          </div>
+
+          <div class="card mt-6" id="order-card" hidden>
+            <div class="card__head">
+              <h2 class="card__title">
+                <span data-icon="bolt" data-icon-size="20"></span>
+                طلب خدمة
+              </h2>
+            </div>
+
+            <div class="alert alert--warning" id="order-auth-note" role="note" hidden>
+              <span data-icon="alert" data-icon-size="20"></span>
+              <div>
+                <p class="alert__title">تحتاج إلى تسجيل الدخول</p>
+                <p>
+                  سجّل الدخول أو أنشئ حسابًا لتتمكّن من إرسال الطلبات وخصم
+                  التكلفة من محفظتك.
+                </p>
+                <p class="mt-4">
+                  <a class="btn btn--primary btn--sm" href="login.html">تسجيل الدخول</a>
+                  <a class="btn btn--outline btn--sm" href="register.html">إنشاء حساب</a>
+                </p>
+              </div>
+            </div>
+
+            <form class="form" id="order-form" novalidate>
+              <div class="field">
+                <label class="field__label" for="order-service">الخدمة</label>
+                <select class="select" id="order-service" required></select>
+                <p class="field__error" aria-live="polite"></p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="order-target">
+                  الرابط أو معرّف الحساب
+                </label>
+                <input
+                  class="input"
+                  id="order-target"
+                  name="target"
+                  type="text"
+                  dir="ltr"
+                  placeholder="https://..."
+                  required
+                />
+                <p class="field__hint">
+                  أدخل رابط المنشور أو الحساب، أو اسم المستخدم المطلوب.
+                </p>
+                <p class="field__error" aria-live="polite"></p>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="order-quantity">الكمية</label>
+                <input
+                  class="input"
+                  id="order-quantity"
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  inputmode="numeric"
+                  dir="ltr"
+                  required
+                />
+                <p class="field__hint" id="order-quantity-hint">
+                  اختر خدمة لعرض الحد الأدنى والأقصى للكمية.
+                </p>
+                <p class="field__error" aria-live="polite"></p>
+              </div>
+
+              <div class="info-list">
+                <div class="info-list__row">
+                  <span class="info-list__label">التكلفة التقديرية</span>
+                  <span class="info-list__value" id="order-charge">—</span>
+                </div>
+                <div class="info-list__row">
+                  <span class="info-list__label">رصيد محفظتك</span>
+                  <span class="info-list__value" id="order-balance">—</span>
+                </div>
+              </div>
+
+              <button
+                class="btn btn--primary btn--block btn--lg"
+                type="submit"
+              >
+                إرسال الطلب
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= المميزات ================= -->
+      <section class="section section--alt" id="features">
+        <div class="container">
+          <div class="section__head">
+            <h2>لماذا تختار منصّة نمو؟</h2>
+            <p>نركّز على الجودة والوضوح لنمنحك تجربة استخدام مريحة وآمنة.</p>
+          </div>
+
+          <div class="feature-grid">
+            <article class="card feature" data-reveal>
+              <span class="icon-badge" data-icon="bolt"></span>
+              <h3>تنفيذ سريع</h3>
+              <p>تبدأ الطلبات خلال دقائق من تأكيدها دون انتظار طويل.</p>
+            </article>
+            <article class="card feature" data-reveal>
+              <span class="icon-badge" data-icon="shield"></span>
+              <h3>أمان وخصوصية</h3>
+              <p>لا نطلب كلمة المرور، ونتعامل مع بياناتك بسرّية تامة.</p>
+            </article>
+            <article class="card feature" data-reveal>
+              <span class="icon-badge" data-icon="wallet"></span>
+              <h3>شحن بالدينار الليبي</h3>
+              <p>شحن المحفظة عبر ليبيانا والمدار مباشرةً من داخل الموقع.</p>
+            </article>
+            <article class="card feature" data-reveal>
+              <span class="icon-badge" data-icon="chart"></span>
+              <h3>تتبّع دقيق</h3>
+              <p>تابع حالة كل طلب وكل عملية شحن لحظة بلحظة.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= كيف يعمل ================= -->
+      <section class="section" id="how">
+        <div class="container">
+          <div class="section__head">
+            <h2>كيف يعمل الموقع؟</h2>
+            <p>أربع خطوات بسيطة تفصلك عن بدء أول طلب لك.</p>
+          </div>
+
+          <div class="steps">
+            <article class="step" data-reveal>
+              <h3>أنشئ حسابك</h3>
+              <p>سجّل بحساب Google في أقل من دقيقة.</p>
+            </article>
+            <article class="step" data-reveal>
+              <h3>اشحن محفظتك</h3>
+              <p>حوّل المبلغ عبر ليبيانا أو المدار وأكّد العملية.</p>
+            </article>
+            <article class="step" data-reveal>
+              <h3>اختر الخدمة</h3>
+              <p>حدّد المنصّة والخدمة والكمية التي تحتاجها.</p>
+            </article>
+            <article class="step" data-reveal>
+              <h3>تابع النتيجة</h3>
+              <p>راقب تنفيذ الطلب من لوحة التحكم الخاصة بك.</p>
+            </article>
+          </div>
+
+          <div class="cta-band mt-6" data-reveal>
+            <div>
+              <h2>جاهز لتطوير حساباتك؟</h2>
+              <p>أنشئ حسابك الآن وابدأ بأول طلب خلال دقائق.</p>
+            </div>
+            <div class="hero__actions">
+              <a class="btn btn--accent btn--lg" href="register.html">
+                إنشاء حساب جديد
+              </a>
+              <a class="btn btn--outline btn--lg" href="login.html">
+                لديّ حساب
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================= الفوتر ================= -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer__grid">
+          <div class="footer__brand">
+            <a class="brand" href="index.html">
+              <img
+                class="brand__logo"
+                src="assets/logo.svg"
+                alt=""
+                width="38"
+                height="38"
+              />
+              <span class="brand__name">
+                منصة نمو
+                <small>SMM PANEL</small>
+              </span>
+            </a>
+            <p class="mt-4">
+              منصّة عربية لخدمات النمو على وسائل التواصل الاجتماعي، بجودة عالية
+              ودعم فني متواصل.
+            </p>
+          </div>
+
+          <div class="footer__col">
+            <h2>الموقع</h2>
+            <ul>
+              <li><a href="index.html">الرئيسية</a></li>
+              <li><a href="index.html#services">الخدمات</a></li>
+              <li><a href="index.html#features">المميزات</a></li>
+              <li><a href="index.html#how">كيف يعمل</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <h2>الحساب</h2>
+            <ul>
+              <li><a href="login.html">تسجيل الدخول</a></li>
+              <li><a href="register.html">إنشاء حساب</a></li>
+              <li><a href="wallet.html">المحفظة</a></li>
+              <li><a href="settings.html">الإعدادات</a></li>
+            </ul>
+          </div>
+
+          <div class="footer__col">
+            <h2>الدعم والسياسات</h2>
+            <ul>
+              <li><a href="#" data-placeholder>مركز المساعدة</a></li>
+              <li><a href="#" data-placeholder>سياسة الخصوصية</a></li>
+              <li><a href="#" data-placeholder>شروط الاستخدام</a></li>
+              <li><a href="#" data-placeholder>تواصل معنا</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer__bottom">
+          <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <div class="footer__badges">
+            <span class="badge badge--muted">ليبيانا</span>
+            <span class="badge badge--muted">المدار</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
