@@ -95,7 +95,7 @@
             <li><a class="nav__link" href="#services">الخدمات</a></li>
             <li><a class="nav__link" href="#features">المميزات</a></li>
             <li><a class="nav__link" href="#how">كيف يعمل</a></li>
-            <li><a class="nav__link" href="wallet.html">المحفظة</a></li>
+            <li data-auth-only hidden><a class="nav__link" href="wallet.html">المحفظة</a></li>
           </ul>
           <div class="nav__actions">
             <a class="btn btn--ghost" href="login.html">تسجيل الدخول</a>
@@ -124,8 +124,20 @@
               المنصّات، بجودة عالية وأسعار مناسبة وواجهة بسيطة تناسب الجميع.
             </p>
             <div class="hero__actions">
-              <a class="btn btn--primary btn--lg" href="register.html">
+              <a
+                class="btn btn--primary btn--lg"
+                href="register.html"
+                data-guest-only
+              >
                 ابدأ الآن مجانًا
+              </a>
+              <a
+                class="btn btn--primary btn--lg"
+                href="wallet.html"
+                data-auth-only
+                hidden
+              >
+                الذهاب إلى المحفظة
               </a>
               <a class="btn btn--outline btn--lg" href="#services">
                 استعرض الخدمات
@@ -360,7 +372,7 @@
             </article>
           </div>
 
-          <div class="cta-band mt-6" data-reveal>
+          <div class="cta-band mt-6" data-reveal data-guest-only>
             <div>
               <h2>جاهز لتطوير حساباتك؟</h2>
               <p>أنشئ حسابك الآن وابدأ بأول طلب خلال دقائق.</p>
@@ -415,26 +427,17 @@
           <div class="footer__col">
             <h2>الحساب</h2>
             <ul>
-              <li><a href="login.html">تسجيل الدخول</a></li>
-              <li><a href="register.html">إنشاء حساب</a></li>
-              <li><a href="wallet.html">المحفظة</a></li>
-              <li><a href="settings.html">الإعدادات</a></li>
-            </ul>
-          </div>
-
-          <div class="footer__col">
-            <h2>الدعم والسياسات</h2>
-            <ul>
-              <li><a href="#" data-placeholder>مركز المساعدة</a></li>
-              <li><a href="#" data-placeholder>سياسة الخصوصية</a></li>
-              <li><a href="#" data-placeholder>شروط الاستخدام</a></li>
-              <li><a href="#" data-placeholder>تواصل معنا</a></li>
+              <li data-guest-only><a href="login.html">تسجيل الدخول</a></li>
+              <li data-guest-only><a href="register.html">إنشاء حساب</a></li>
+              <li data-auth-only hidden><a href="wallet.html">المحفظة</a></li>
+              <li data-auth-only hidden><a href="settings.html">الإعدادات</a></li>
             </ul>
           </div>
         </div>
 
         <div class="footer__bottom">
           <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <span class="footer__credit">المبرمج محمد علي بشير</span>
           <div class="footer__badges">
             <span class="badge badge--muted">ليبيانا</span>
             <span class="badge badge--muted">المدار</span>

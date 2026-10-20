@@ -208,6 +208,11 @@
   gap: var(--space-2);
 }
 
+.footer__credit {
+  color: #a8b3c7;
+  font-weight: 600;
+}
+
 /* ============ التخطيط العام ============ */
 .page {
   padding-block: var(--space-6) var(--space-7);
@@ -246,7 +251,7 @@
   }
 
   .footer__grid {
-    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    grid-template-columns: 1.6fr 1fr 1fr;
   }
 }
 

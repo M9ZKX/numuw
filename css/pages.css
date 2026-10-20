@@ -194,37 +194,6 @@
   font-size: 0.92rem;
 }
 
-/* شبكة الخدمات (منصات) */
-.platforms-grid {
-  display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.platform-card {
-  text-align: center;
-  padding: var(--space-5) var(--space-3);
-}
-
-.platform-card .icon-badge {
-  margin: 0 auto var(--space-3);
-  width: 52px;
-  height: 52px;
-}
-
-.platform-card h3 {
-  font-size: 1rem;
-  margin: 0;
-  font-weight: 700;
-}
-
-.platform-card > span:last-child {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
 /* خطوات العمل */
 .steps {
   display: grid;
@@ -427,12 +396,6 @@
   align-items: center;
 }
 
-.balance-card .badge--experimental {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffe6b0;
-  border-color: rgba(255, 230, 176, 0.5);
-}
-
 .balance-card__note {
   color: #c3d0f0;
   font-size: 0.82rem;
@@ -540,43 +503,6 @@
   color: var(--color-primary);
 }
 
-.profile-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.profile-head__meta {
-  flex: 1;
-  min-width: 160px;
-}
-
-.profile-head__meta strong {
-  font-size: 1.1rem;
-  display: block;
-}
-
-.profile-head__meta span {
-  color: var(--color-text-muted);
-  font-size: 0.88rem;
-}
-
 .info-list {
   display: grid;
   gap: var(--space-3);
@@ -648,10 +574,6 @@
   .feature-grid {
     grid-template-columns: 1fr 1fr;
   }
-
-  .platforms-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 @media (min-width: 900px) {
@@ -662,10 +584,6 @@
 
   .feature-grid {
     grid-template-columns: repeat(4, 1fr);
-  }
-
-  .platforms-grid {
-    grid-template-columns: repeat(6, 1fr);
   }
 
   .steps {
@@ -696,5 +614,43 @@
     position: static;
     overflow: visible;
     padding-bottom: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-block: var(--space-5) var(--space-6);
+  }
+
+  .page-head {
+    margin-bottom: var(--space-5);
+  }
+
+  .balance-card {
+    padding: var(--space-4);
+  }
+
+  .balance-card__value {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .card--padless .card__head {
+    padding: var(--space-4) var(--space-4) 0;
+  }
+
+  .card--padless .badge-list {
+    padding: var(--space-4);
+  }
+
+  .stack {
+    gap: var(--space-4);
+  }
+
+  .wallet-layout {
+    gap: var(--space-4);
   }
 }

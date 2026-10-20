@@ -137,22 +137,22 @@
       const meta = STATUS_META[r.status] || STATUS_META.pending;
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td dir="ltr">#' +
+        '<td dir="ltr" data-label="رقم العملية">#' +
         r.id +
         "</td>" +
-        "<td>" +
+        '<td data-label="التاريخ">' +
         formatDate(r.created_at) +
         "</td>" +
-        "<td>" +
+        '<td data-label="الشركة">' +
         (COMPANY_NAME[r.company] || r.company) +
         "</td>" +
-        '<td dir="ltr">' +
+        '<td dir="ltr" data-label="رقم الهاتف">' +
         (r.sender_phone || EMPTY) +
         "</td>" +
-        "<td>" +
+        '<td data-label="المبلغ">' +
         formatCurrency(r.amount) +
         " د.ل</td>" +
-        '<td><span class="badge ' +
+        '<td data-label="الحالة"><span class="badge ' +
         meta.cls +
         '">' +
         meta.label +

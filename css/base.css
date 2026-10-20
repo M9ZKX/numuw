@@ -215,10 +215,6 @@ ul {
   padding-inline: var(--space-4);
 }
 
-.text-center {
-  text-align: center;
-}
-
 .text-muted {
   color: var(--color-text-muted);
 }
@@ -310,16 +306,6 @@ html[data-theme="dark"] .hero {
 
 html[data-theme="dark"] .table thead th {
   color: var(--color-text-soft);
-}
-
-html[data-theme="dark"] .skeleton {
-  background: linear-gradient(
-    90deg,
-    #1e263a 25%,
-    #263149 37%,
-    #1e263a 63%
-  );
-  background-size: 400% 100%;
 }
 
 html[data-theme="dark"] .btn--google {

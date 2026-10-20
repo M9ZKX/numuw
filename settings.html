@@ -111,8 +111,7 @@
           <!-- قائمة جانبية -->
           <nav class="settings-nav" aria-label="أقسام الإعدادات">
             <a href="#account">معلومات الحساب</a>
-            <a href="#interface">الواجهة</a>
-            <a href="#future">إعدادات مستقبلية</a>
+            <a href="#interface">إعدادات الواجهة</a>
           </nav>
 
           <div class="stack">
@@ -155,9 +154,10 @@
                     autocomplete="email"
                     value=""
                     dir="ltr"
+                    readonly
                   />
                   <p class="field__hint">
-                    تغيير البريد يتطلب تأكيدًا عبر خدمة المصادقة (غير مفعّل بعد).
+                    لا يمكن تغيير البريد الإلكتروني حاليًا.
                   </p>
                 </div>
 
@@ -218,79 +218,20 @@
 
               <div class="setting-row">
                 <div class="setting-row__text">
-                  <strong>تنبيهات البريد الإلكتروني</strong>
-                  <span>إشعارات عند تحديث حالة الطلبات والشحن.</span>
+                  <strong>تسجيل الخروج</strong>
+                  <span>إنهاء الجلسة الحالية على هذا الجهاز.</span>
                 </div>
-                <label class="switch">
-                  <input
-                    type="checkbox"
-                    data-placeholder-control
-                    aria-label="تفعيل تنبيهات البريد الإلكتروني"
-                  />
-                  <span class="switch__track"></span>
-                </label>
-              </div>
-            </section>
-
-            <!-- ============ إعدادات مستقبلية ============ -->
-            <section class="card" id="future">
-              <div class="card__head">
-                <h2 class="card__title">
-                  <span data-icon="sparkles" data-icon-size="20"></span>
-                  إعدادات الحساب المستقبلية
-                </h2>
-              </div>
-
-              <div class="alert alert--info" role="note">
-                <span data-icon="info" data-icon-size="20"></span>
-                <div>
-                  <p class="alert__title">قريبًا</p>
-                  <p>
-                    هذه الأقسام قيد التطوير وستُفعّل في المراحل القادمة.
-                  </p>
-                </div>
-              </div>
-
-              <div class="setting-row mt-4">
-                <div class="setting-row__text">
-                  <strong>تغيير كلمة المرور</strong>
-                  <span>تحديث كلمة مرور الحساب بأمان.</span>
-                </div>
-                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
-                  <span data-icon="lock" data-icon-size="16"></span>
-                  فتح
-                </button>
-              </div>
-
-              <div class="setting-row">
-                <div class="setting-row__text">
-                  <strong>التحقق بخطوتين</strong>
-                  <span>إضافة طبقة حماية إضافية للحساب.</span>
-                </div>
-                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
-                  <span data-icon="shield" data-icon-size="16"></span>
-                  فتح
-                </button>
-              </div>
-
-              <div class="setting-row">
-                <div class="setting-row__text">
-                  <strong>الأجهزة والجلسات</strong>
-                  <span>إدارة الأجهزة المتصلة بحسابك.</span>
-                </div>
-                <button class="btn btn--outline btn--sm" type="button" data-placeholder>
-                  <span data-icon="grid" data-icon-size="16"></span>
-                  فتح
-                </button>
-              </div>
-
-              <div class="mt-4">
-                <button class="btn btn--ghost" type="button" id="logout-btn">
-                  <span data-icon="logout" data-icon-size="18"></span>
-                  تسجيل الخروج
+                <button
+                  class="btn btn--outline btn--sm"
+                  type="button"
+                  id="logout-btn"
+                >
+                  <span data-icon="logout" data-icon-size="16"></span>
+                  خروج
                 </button>
               </div>
             </section>
+
           </div>
         </div>
       </div>
@@ -339,20 +280,11 @@
               <li><a href="settings.html">الإعدادات</a></li>
             </ul>
           </div>
-
-          <div class="footer__col">
-            <h2>الدعم والسياسات</h2>
-            <ul>
-              <li><a href="#" data-placeholder>مركز المساعدة</a></li>
-              <li><a href="#" data-placeholder>سياسة الخصوصية</a></li>
-              <li><a href="#" data-placeholder>شروط الاستخدام</a></li>
-              <li><a href="#" data-placeholder>تواصل معنا</a></li>
-            </ul>
-          </div>
         </div>
 
         <div class="footer__bottom">
           <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <span class="footer__credit">المبرمج محمد علي بشير</span>
           <div class="footer__badges">
             <span class="badge badge--muted">ليبيانا</span>
             <span class="badge badge--muted">المدار</span>

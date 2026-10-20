@@ -1,7 +1,6 @@
 /*
   ui.js
-  أدوات واجهة مشتركة: التنبيهات المنبثقة (Toast)، إظهار/إخفاء كلمة المرور،
-  ومعالجة العناصر الأولية غير المفعّلة.
+  أدوات واجهة مشتركة: التنبيهات المنبثقة (Toast) وربط الحقول بتلميحاتها.
 */
 
 (function () {
@@ -81,30 +80,6 @@
     return el;
   }
 
-  /* ——— إظهار/إخفاء كلمة المرور ——— */
-  function initPasswordToggles() {
-    document.querySelectorAll("[data-toggle-password]").forEach(function (btn) {
-      const targetId = btn.getAttribute("data-toggle-password");
-      const input = document.getElementById(targetId);
-      if (!input) return;
-
-      btn.addEventListener("click", function () {
-        const show = input.type === "password";
-        input.type = show ? "text" : "password";
-        btn.setAttribute("aria-pressed", String(show));
-        btn.setAttribute(
-          "aria-label",
-          show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
-        );
-        btn.innerHTML = "";
-        const svg = window.Icons
-          ? window.Icons.createIcon(show ? "eye-off" : "eye", 18)
-          : null;
-        if (svg) btn.appendChild(svg);
-      });
-    });
-  }
-
   /* ——— ربط الحقول بتلميحاتها ورسائل الخطأ ——— */
   function initFieldA11y() {
     document.querySelectorAll(".field").forEach(function (field) {
@@ -130,23 +105,8 @@
     });
   }
 
-  /* ——— العناصر الأولية غير المفعّلة ——— */
-  function initPlaceholders() {
-    document.querySelectorAll("[data-placeholder]").forEach(function (el) {
-      el.addEventListener("click", function (e) {
-        e.preventDefault();
-        toast("هذا العنصر أولي ضمن واجهة العرض ولم يتم تفعيله بعد.", {
-          type: "info",
-          title: "عنصر أولي",
-        });
-      });
-    });
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
     initFieldA11y();
-    initPasswordToggles();
-    initPlaceholders();
   });
 
   window.UI = { toast };

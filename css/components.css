@@ -174,17 +174,6 @@
   gap: var(--space-2);
 }
 
-.card--interactive {
-  transition: transform var(--transition), box-shadow var(--transition),
-    border-color var(--transition);
-}
-
-.card--interactive:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border-strong);
-}
-
 /* أيقونة داخل بطاقة */
 .icon-badge {
   display: inline-flex;
@@ -263,34 +252,22 @@
   min-height: 1em;
 }
 
-/* حقل كلمة المرور مع زر الإظهار */
-.input-group {
-  position: relative;
-}
-
-.input-group .input {
-  padding-inline-end: 3rem;
-}
-
-.input-group__btn {
-  position: absolute;
-  inset-inline-end: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+/* مربّع اختيار */
+.checkbox {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  color: var(--color-text-soft);
+  cursor: pointer;
 }
 
-.input-group__btn:hover {
-  background: var(--color-surface-2);
-  color: var(--color-text);
+.checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* مفتاح تبديل */
@@ -509,12 +486,6 @@
   color: var(--color-text-soft);
 }
 
-.badge--experimental {
-  background: var(--color-warning-soft);
-  color: var(--status-warning-fg);
-  border: 1px dashed color-mix(in srgb, var(--status-warning-fg) 45%, transparent);
-}
-
 /* قائمة شارات مع شرح مختصر */
 .badge-list {
   display: grid;
@@ -576,7 +547,7 @@
   background: var(--color-surface-2);
 }
 
-/* ============ حالات فارغة/تحميل ============ */
+/* ============ حالات فارغة ============ */
 .empty-state {
   text-align: center;
   padding: var(--space-7) var(--space-4);
@@ -588,52 +559,6 @@
   height: 48px;
   margin: 0 auto var(--space-3);
   color: var(--color-border-strong);
-}
-
-.skeleton {
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-2) 25%,
-    #e8edf6 37%,
-    var(--color-surface-2) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.3s ease infinite;
-  height: 1em;
-}
-
-/* خط عظمي يملأ خلية جدول */
-.skeleton-line {
-  display: block;
-  width: 70%;
-  height: 0.85em;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0 50%;
-  }
-}
-
-/* ============ فاصل ============ */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
 }
 
 /* ============ تنبيه أولي ============ */
@@ -692,6 +617,57 @@
 @media (min-width: 720px) {
   .table-hint {
     display: none;
+  }
+}
+
+/* جدول يتحوّل إلى بطاقات على الشاشات الصغيرة */
+@media (max-width: 720px) {
+  .table--stack {
+    min-width: 0;
+  }
+
+  .table--stack thead {
+    display: none;
+  }
+
+  .table--stack tbody tr {
+    display: block;
+    padding: var(--space-3) 0;
+  }
+
+  .table--stack tbody tr + tr {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .table--stack tbody tr:hover {
+    background: transparent;
+  }
+
+  .table--stack td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 0;
+    text-align: start;
+    white-space: normal;
+  }
+
+  .table--stack td:not([data-label]) {
+    display: block;
+  }
+
+  .table--stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+
+  .table--stack td:not([data-label])::before {
+    content: none;
   }
 }
 

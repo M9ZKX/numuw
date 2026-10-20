@@ -3,8 +3,7 @@
   منطق صفحة الإعدادات.
 
   تغيير الواجهة (فاتح/داكن) محلي فقط. نموذج معلومات الحساب يعرض بيانات
-  الجلسة الحقيقية القادمة من Supabase Auth، أما حفظ تعديلاته وبقية
-  الإعدادات فغير مفعّل بعد.
+  الجلسة الحقيقية ويحفظ الاسم الظاهر عبر خدمة المصادقة.
 */
 
 (function () {
@@ -42,37 +41,56 @@
     });
   }
 
-  /* ——— عناصر أولية غير مفعّلة ——— */
-  function initPlaceholderControls() {
-    document.querySelectorAll("[data-placeholder-control]").forEach(function (el) {
-      el.addEventListener("change", function () {
-        window.UI.toast("هذا الإعداد غير متاح حاليًا.", {
-          type: "info",
-          title: "قريبًا",
-          duration: 4000,
-        });
-      });
-    });
-  }
-
-  /* ——— نموذج معلومات الحساب ——— */
+  /* ——— حفظ معلومات الحساب ——— */
   function initAccountForm() {
     const form = document.getElementById("account-form");
     if (!form) return;
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
+
+      const client = window.SupabaseClient;
+      const name = document.getElementById("account-name");
       const btn = form.querySelector('button[type="submit"]');
-      btn.classList.add("is-loading");
-      btn.setAttribute("aria-busy", "true");
-      setTimeout(function () {
-        btn.classList.remove("is-loading");
-        btn.removeAttribute("aria-busy");
-        window.UI.toast(
-          "حفظ بيانات الحساب غير متاح حاليًا.",
-          { type: "info", title: "غير متاح", duration: 5000 }
-        );
-      }, 900);
+      if (!client || !client.auth || !name) return;
+
+      const fullName = name.value.trim();
+      if (!fullName) {
+        window.UI.toast("أدخل اسمًا صالحًا أولًا.", { type: "warning" });
+        name.focus();
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add("is-loading");
+        btn.setAttribute("aria-busy", "true");
+      }
+
+      try {
+        const res = await client.auth.updateUser({
+          data: { full_name: fullName },
+        });
+        if (res && res.error) {
+          window.UI.toast("تعذّر حفظ التغييرات، حاول مرة أخرى.", {
+            type: "danger",
+            title: "لم يتم الحفظ",
+          });
+        } else {
+          window.UI.toast("تم حفظ التغييرات.", { type: "success" });
+        }
+      } catch (err) {
+        window.UI.toast("تعذّر حفظ التغييرات، تحقّق من الاتصال.", {
+          type: "danger",
+          title: "لم يتم الحفظ",
+        });
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove("is-loading");
+          btn.removeAttribute("aria-busy");
+        }
+      }
     });
   }
 
@@ -131,7 +149,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     initThemeToggle();
-    initPlaceholderControls();
     initAccountForm();
     initAccountSession();
     initLogout();

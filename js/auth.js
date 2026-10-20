@@ -16,6 +16,35 @@
   const V = window.Validators;
   const H = window.FormHelpers;
 
+  /* مفتاح مفضّلة "تذكّرني" الذي يقرأه supabase-client.js لاختيار مخزن الجلسة. */
+  const REMEMBER_KEY = "numuw-remember-session";
+
+  function rememberField() {
+    return document.getElementById("remember-me");
+  }
+
+  /* يثبّت المفضّلة الحالية قبل بدء الدخول حتى تُحفظ الجلسة في المخزن الصحيح. */
+  function applyRememberChoice() {
+    const el = rememberField();
+    if (!el) return;
+    try {
+      localStorage.setItem(REMEMBER_KEY, el.checked ? "1" : "0");
+    } catch (err) {
+      /* التخزين محظور — نتجاهل */
+    }
+  }
+
+  /* يعيد ضبط المربّع حسب المفضّلة المحفوظة (المضبوط افتراضيًا على التذكّر). */
+  function initRememberField() {
+    const el = rememberField();
+    if (!el) return;
+    try {
+      el.checked = localStorage.getItem(REMEMBER_KEY) !== "0";
+    } catch (err) {
+      /* تجاهل */
+    }
+  }
+
   /* يعمل مع النطاق الجذري وأيضًا مع النشر داخل مجلد فرعي (مثل GitHub Pages). */
   function redirectUrl(page) {
     return new URL(page, location.href).href;
@@ -49,6 +78,7 @@
     }
 
     setLoading(btn, true);
+    applyRememberChoice();
     const redirectTo = redirectUrl(REDIRECT_AFTER_LOGIN);
 
     client.auth
@@ -100,6 +130,7 @@
         if (check.firstInvalid) check.firstInvalid.focus();
         return;
       }
+      applyRememberChoice();
       submitEmailLogin(form, email.value.trim(), password.value);
     });
   }
@@ -162,6 +193,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    initRememberField();
     bindGoogleButton("google-login");
     bindGoogleButton("google-register");
     bindEmailLogin();

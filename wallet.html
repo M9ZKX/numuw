@@ -267,9 +267,8 @@
                   سجل عمليات الشحن
                 </h2>
               </div>
-              <span class="table-hint">اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
               <div class="table-wrap">
-                <table class="table">
+                <table class="table table--stack">
                   <caption class="visually-hidden">
                     سجل عمليات الشحن
                   </caption>
@@ -331,9 +330,6 @@
                 إذا لم يظهر الرصيد بعد التحويل خلال وقت معتاد، تواصل مع فريق
                 الدعم مع رقم العملية.
               </p>
-              <a class="btn btn--outline btn--block" href="#" data-placeholder>
-                تواصل مع الدعم
-              </a>
             </section>
           </aside>
         </div>
@@ -377,26 +373,17 @@
           <div class="footer__col">
             <h2>الحساب</h2>
             <ul>
-              <li><a href="login.html">تسجيل الدخول</a></li>
-              <li><a href="register.html">إنشاء حساب</a></li>
-              <li><a href="wallet.html">المحفظة</a></li>
-              <li><a href="settings.html">الإعدادات</a></li>
-            </ul>
-          </div>
-
-          <div class="footer__col">
-            <h2>الدعم والسياسات</h2>
-            <ul>
-              <li><a href="#" data-placeholder>مركز المساعدة</a></li>
-              <li><a href="#" data-placeholder>سياسة الخصوصية</a></li>
-              <li><a href="#" data-placeholder>شروط الاستخدام</a></li>
-              <li><a href="#" data-placeholder>تواصل معنا</a></li>
+              <li data-guest-only><a href="login.html">تسجيل الدخول</a></li>
+              <li data-guest-only><a href="register.html">إنشاء حساب</a></li>
+              <li data-auth-only hidden><a href="wallet.html">المحفظة</a></li>
+              <li data-auth-only hidden><a href="settings.html">الإعدادات</a></li>
             </ul>
           </div>
         </div>
 
         <div class="footer__bottom">
           <span>© <span data-year>2026</span> منصة نمو. جميع الحقوق محفوظة.</span>
+          <span class="footer__credit">المبرمج محمد علي بشير</span>
           <div class="footer__badges">
             <span class="badge badge--muted">ليبيانا</span>
             <span class="badge badge--muted">المدار</span>

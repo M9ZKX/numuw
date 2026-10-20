@@ -100,6 +100,16 @@
     }
   }
 
+  /* ——— إظهار/إخفاء العناصر حسب حالة الدخول ——— */
+  function applyAuthVisibility(authenticated) {
+    document.querySelectorAll("[data-guest-only]").forEach(function (el) {
+      el.hidden = authenticated;
+    });
+    document.querySelectorAll("[data-auth-only]").forEach(function (el) {
+      el.hidden = !authenticated;
+    });
+  }
+
   /* ——— رابط الإدارة في الترويسة (للمشرف فقط) ——— */
   function syncAdminLink() {
     const links = document.querySelector(".nav__links");
@@ -168,6 +178,7 @@
       window.AppSession.role = null;
       renderNav({ authenticated: false });
       syncAdminLink();
+      applyAuthVisibility(false);
       if (window.UI) {
         window.UI.toast("تم تسجيل الخروج من حسابك.", { type: "info", title: "خروج" });
       }
@@ -188,6 +199,7 @@
     return resolveRole(session).then(function () {
       renderNav({ authenticated: Boolean(session), user: session && session.user });
       syncAdminLink();
+      applyAuthVisibility(Boolean(session));
       route();
       document.dispatchEvent(
         new CustomEvent("session:changed", { detail: window.AppSession })
@@ -212,6 +224,7 @@
     window.AppSession.ready = true;
     renderNav({ authenticated: false });
     syncAdminLink();
+    applyAuthVisibility(false);
     route();
     document.dispatchEvent(
       new CustomEvent("session:changed", { detail: window.AppSession })
