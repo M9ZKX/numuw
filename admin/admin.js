@@ -411,45 +411,190 @@
   }
 
   /* ——— الخدمات ——— */
+  const SERVICES_PAGE_SIZE = 50;
+  let servicesPage = 1;
+  let servicesTotal = 0;
+  let servicesCategoriesLoaded = false;
+
+  function servicesState() {
+    return {
+      search: (el("services-search") && el("services-search").value.trim()) || "",
+      category: (el("services-category") && el("services-category").value) || "",
+      provider: (el("services-provider") && el("services-provider").value) || "",
+      status: (el("services-status") && el("services-status").value) || "",
+    };
+  }
+
+  function escapeLike(value) {
+    return value.replace(/[%_,]/g, function (c) { return "\\" + c; });
+  }
+
+  function buildServicesQuery(c, state) {
+    let q = c.from("services").select("*", { count: "exact" });
+    if (state.search) q = q.ilike("name", "%" + escapeLike(state.search) + "%");
+    if (state.category) q = q.eq("category", state.category);
+    if (state.provider) q = q.eq("provider_id", Number(state.provider));
+    if (state.status === "active") q = q.eq("is_active", true);
+    else if (state.status === "inactive") q = q.eq("is_active", false);
+    return q;
+  }
+
   function services() {
     const c = client();
     const tbody = el("services-body");
     if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7">جارٍ التحميل…</td></tr>';
+    const state = servicesState();
+    const from = (servicesPage - 1) * SERVICES_PAGE_SIZE;
+    const to = from + SERVICES_PAGE_SIZE - 1;
+
     Promise.all([
-      c.from("services").select("*").order("category", { ascending: true }).order("sort_order", { ascending: true }),
+      buildServicesQuery(c, state)
+        .order("category", { ascending: true })
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
       c.from("providers").select("id, name"),
     ]).then(function (r) {
       const provName = {};
       ((r[1] && r[1].data) || []).forEach(function (p) { provName[p.id] = p.name; });
-      servicesMap = {};
+
+      if (r[0] && r[0].error) {
+        tbody.innerHTML = '<tr><td colspan="7">تعذّر تحميل الخدمات.</td></tr>';
+        return;
+      }
       const rows = (r[0] && r[0].data) || [];
+      servicesTotal = (r[0] && typeof r[0].count === "number") ? r[0].count : rows.length;
+      servicesMap = {};
       rows.forEach(function (s) { servicesMap[s.id] = s; });
 
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7">لا توجد خدمات بعد. تُستورد من المزوّدين عبر المزامنة.</td></tr>';
-        return;
+        tbody.innerHTML = '<tr><td colspan="7">لا توجد خدمات مطابقة. جرّب تعديل الفلاتر أو ابدأ المزامنة.</td></tr>';
+      } else {
+        tbody.innerHTML = rows
+          .map(function (s) {
+            const provider = s.provider_id ? (provName[s.provider_id] || "—") : "—";
+            return (
+              '<tr data-id="' + s.id + '">' +
+              "<td>" + escapeHtml(s.name) + "</td>" +
+              '<td dir="ltr">' + escapeHtml(s.category || "—") + "</td>" +
+              "<td>" + escapeHtml(provider) + "</td>" +
+              '<td><input class="input js-rate" type="number" step="0.0001" min="0" dir="ltr" style="max-width:110px" value="' + s.rate + '" /></td>' +
+              '<td><input class="input js-markup" type="number" step="0.01" dir="ltr" style="max-width:90px" value="' + (s.markup == null ? 0 : s.markup) + '" /></td>' +
+              '<td><input type="checkbox" class="js-active" ' + (s.is_active ? "checked" : "") + " /></td>" +
+              "<td>" +
+              '<button class="btn btn--outline btn--sm" type="button" data-act="save-service">حفظ</button> ' +
+              '<button class="btn btn--ghost btn--sm" type="button" data-act="del-service">حذف</button>' +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
       }
-      tbody.innerHTML = rows
-        .map(function (s) {
-          const provider = s.provider_id ? (provName[s.provider_id] || "—") : "—";
-          return (
-            '<tr data-id="' + s.id + '">' +
-            "<td>" + escapeHtml(s.name) + "</td>" +
-            '<td dir="ltr">' + escapeHtml(s.category || "—") + "</td>" +
-            "<td>" + escapeHtml(provider) + "</td>" +
-            '<td><input class="input js-rate" type="number" step="0.0001" min="0" dir="ltr" style="max-width:110px" value="' + s.rate + '" /></td>' +
-            '<td><input class="input js-markup" type="number" step="0.01" dir="ltr" style="max-width:90px" value="' + (s.markup == null ? 0 : s.markup) + '" /></td>' +
-            '<td><input type="checkbox" class="js-active" ' + (s.is_active ? "checked" : "") + " /></td>" +
-            "<td>" +
-            '<button class="btn btn--outline btn--sm" type="button" data-act="save-service">حفظ</button> ' +
-            '<button class="btn btn--ghost btn--sm" type="button" data-act="del-service">حذف</button>' +
-            "</td>" +
-            "</tr>"
-          );
-        })
-        .join("");
+      renderServicesPager();
     });
   }
+
+  function renderServicesPager() {
+    const pager = el("services-pager");
+    const countLabel = el("services-count");
+    const pages = Math.max(1, Math.ceil(servicesTotal / SERVICES_PAGE_SIZE));
+    if (servicesPage > pages) servicesPage = pages;
+    if (countLabel) {
+      countLabel.textContent = "إجمالي النتائج: " + servicesTotal.toLocaleString("en-US") +
+        " — صفحة " + servicesPage + " من " + pages;
+    }
+    if (!pager) return;
+    const prev = servicesPage > 1;
+    const next = servicesPage < pages;
+    pager.innerHTML =
+      '<button class="btn btn--outline btn--sm" type="button" data-page="prev"' + (prev ? "" : " disabled") + ">السابق</button>" +
+      '<span class="pager__label">صفحة ' + servicesPage + " / " + pages + "</span>" +
+      '<button class="btn btn--outline btn--sm" type="button" data-page="next"' + (next ? "" : " disabled") + ">التالي</button>";
+  }
+
+  function loadServiceCategoryOptions() {
+    if (servicesCategoriesLoaded) return;
+    const sel = el("services-category");
+    if (!sel) return;
+    servicesCategoriesLoaded = true;
+    client()
+      .rpc("service_categories")
+      .then(function (res) {
+        const rows = (res && res.data) || [];
+        if (!rows.length) { servicesCategoriesLoaded = false; return; }
+        const frag = document.createDocumentFragment();
+        rows.forEach(function (r) {
+          const name = typeof r === "string" ? r : (r.category || r.name);
+          if (!name) return;
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          frag.appendChild(opt);
+        });
+        sel.appendChild(frag);
+      })
+      .catch(function () { servicesCategoriesLoaded = false; });
+  }
+
+  function loadServiceProviderOptions() {
+    const sel = el("services-provider");
+    if (!sel) return;
+    client()
+      .from("providers")
+      .select("id, name")
+      .order("name", { ascending: true })
+      .then(function (res) {
+        const rows = (res && res.data) || [];
+        const frag = document.createDocumentFragment();
+        rows.forEach(function (p) {
+          const opt = document.createElement("option");
+          opt.value = String(p.id);
+          opt.textContent = p.name;
+          frag.appendChild(opt);
+        });
+        sel.appendChild(frag);
+      });
+  }
+
+  function wireServicesFilters() {
+    const search = el("services-search");
+    const category = el("services-category");
+    const provider = el("services-provider");
+    const status = el("services-status");
+    const reset = el("services-reset");
+    const pager = el("services-pager");
+    let debounce = null;
+    if (search) {
+      search.addEventListener("input", function () {
+        if (debounce) clearTimeout(debounce);
+        debounce = setTimeout(function () { servicesPage = 1; services(); }, 350);
+      });
+    }
+    [category, provider, status].forEach(function (sel) {
+      if (sel) sel.addEventListener("change", function () { servicesPage = 1; services(); });
+    });
+    if (reset) {
+      reset.addEventListener("click", function () {
+        if (search) search.value = "";
+        if (category) category.value = "";
+        if (provider) provider.value = "";
+        if (status) status.value = "";
+        servicesPage = 1;
+        services();
+      });
+    }
+    if (pager) {
+      pager.addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-page]");
+        if (!btn || btn.disabled) return;
+        if (btn.getAttribute("data-page") === "prev" && servicesPage > 1) servicesPage--;
+        else if (btn.getAttribute("data-page") === "next") servicesPage++;
+        services();
+      });
+    }
+  }
+
 
   function saveService(id, row) {
     const patch = {
@@ -478,6 +623,47 @@
         ok("تم حذف الخدمة.");
         services();
       });
+  }
+
+  function syncServices(btn, providerId) {
+    const c = client();
+    if (!c) { fail("الاتصال غير جاهز."); return; }
+    const original = btn ? btn.innerHTML : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "جارٍ المزامنة…";
+    }
+    function restore() {
+      if (!btn) return;
+      btn.disabled = false;
+      btn.innerHTML = original;
+      if (window.Icons && window.Icons.hydrateIcons) window.Icons.hydrateIcons(btn);
+    }
+    const payload = providerId ? { provider_id: providerId } : {};
+    c.functions
+      .invoke("sync-services", { body: payload })
+      .then(function (res) {
+        if (res.error) { fail("تعذّرت المزامنة. تأكّد من رابط الـAPI والمفتاح."); return; }
+        const data = res.data || {};
+        const results = Array.isArray(data.results) ? data.results : [];
+        const bad = results.filter(function (r) { return !r.ok; })[0];
+        if (!data.ok) {
+          fail(bad ? "تعذّرت المزامنة: " + (bad.error || "خطأ") : "تعذّرت المزامنة.");
+          return;
+        }
+        let inserted = 0;
+        let updated = 0;
+        results.forEach(function (r) {
+          inserted += r.inserted || 0;
+          updated += r.updated || 0;
+        });
+        ok("تمت المزامنة: " + inserted + " خدمة جديدة، " + updated + " محدّثة.");
+        if (pageKey() === "services") services();
+      })
+      .catch(function () {
+        fail("تعذّرت المزامنة. تحقّق من الاتصال.");
+      })
+      .then(restore);
   }
 
   /* ——— الطلبات ——— */
@@ -857,7 +1043,7 @@
       const sync = el("providers-sync");
       if (sync) {
         sync.addEventListener("click", function () {
-          soon("مزامنة الخدمات من المزوّدين ستُفعّل عند ربط الـAPI.");
+          syncServices(sync);
         });
       }
       const tbody = el("providers-body");
@@ -900,9 +1086,13 @@
       const sync = el("services-sync");
       if (sync) {
         sync.addEventListener("click", function () {
-          soon("المزامنة ستُفعّل عند ربط الـAPI.");
+          syncServices(sync);
         });
       }
+      servicesPage = 1;
+      loadServiceCategoryOptions();
+      loadServiceProviderOptions();
+      wireServicesFilters();
     }
 
     if (key === "orders") {

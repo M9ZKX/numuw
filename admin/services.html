@@ -63,7 +63,37 @@
               تُستورد الخدمات من المزوّدين عبر الـAPI. يمكنك هنا ضبط السعر وهامش
               الربح وتفعيل/تعطيل الخدمة.
             </p>
-            <span class="table-hint">اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
+            <div class="filters" style="padding-inline: var(--space-5); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end;">
+              <label class="field" style="margin: 0; flex: 1 1 220px;">
+                <span class="field__label">بحث بالاسم</span>
+                <input class="input" id="services-search" type="search" placeholder="اكتب جزءًا من اسم الخدمة…" />
+              </label>
+              <label class="field" style="margin: 0; flex: 0 1 240px;">
+                <span class="field__label">التصنيف</span>
+                <select class="input" id="services-category">
+                  <option value="">كل التصنيفات</option>
+                </select>
+              </label>
+              <label class="field" style="margin: 0; flex: 0 1 180px;">
+                <span class="field__label">المزوّد</span>
+                <select class="input" id="services-provider">
+                  <option value="">كل المزوّدين</option>
+                </select>
+              </label>
+              <label class="field" style="margin: 0; flex: 0 1 160px;">
+                <span class="field__label">الحالة</span>
+                <select class="input" id="services-status">
+                  <option value="">الكل</option>
+                  <option value="active">مفعّلة</option>
+                  <option value="inactive">غير مفعّلة</option>
+                </select>
+              </label>
+              <button class="btn btn--ghost btn--sm" type="button" id="services-reset">تفريغ الفلاتر</button>
+            </div>
+            <div class="table-hint" style="padding-inline: var(--space-5); display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap;">
+              <span>اسحب الجدول أفقيًا لعرض بقية الأعمدة.</span>
+              <span id="services-count">—</span>
+            </div>
             <div class="table-wrap">
               <table class="table">
                 <thead>
@@ -80,6 +110,7 @@
                 <tbody id="services-body"></tbody>
               </table>
             </div>
+            <div class="pager" id="services-pager" style="padding: var(--space-4) var(--space-5); display: flex; justify-content: center; align-items: center; gap: var(--space-3);"></div>
           </section>
         </main>
       </div>
