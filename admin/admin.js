@@ -135,6 +135,28 @@
 
       const box = document.createElement("div");
       box.className = "admin__user";
+
+      const themeBtn = document.createElement("button");
+      themeBtn.className = "btn btn--outline btn--sm";
+      themeBtn.type = "button";
+      themeBtn.setAttribute("aria-label", "تبديل الوضع الداكن");
+      function syncThemeIcon() {
+        const dark = document.documentElement.getAttribute("data-theme") !== "light";
+        themeBtn.innerHTML = "";
+        const icon = window.Icons && window.Icons.createIcon(dark ? "sun" : "moon", 16);
+        if (icon) themeBtn.appendChild(icon);
+        else themeBtn.textContent = dark ? "☀" : "☾";
+      }
+      themeBtn.addEventListener("click", function () {
+        const dark = document.documentElement.getAttribute("data-theme") !== "light";
+        const next = dark ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem("numuw-admin-theme", next); } catch (e) {}
+        syncThemeIcon();
+      });
+      syncThemeIcon();
+      box.appendChild(themeBtn);
+
       const user = window.AppSession && window.AppSession.user;
       const who = document.createElement("span");
       who.textContent =

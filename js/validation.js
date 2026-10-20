@@ -35,8 +35,8 @@
     amount: function (value) {
       const n = Number(value);
       if (!value || Number.isNaN(n)) return "أدخل مبلغًا صحيحًا.";
-      if (n < 5) return "أقل مبلغ للشحن هو 5 د.ل.";
-      if (n > 5000) return "أقصى مبلغ للشحن هو 5000 د.ل.";
+      if (n < 1) return "أقل مبلغ للشحن هو 1 د.ل.";
+      if (n > 1000) return "أقصى مبلغ للشحن هو 1000 د.ل.";
       return true;
     },
     match: function (value, other) {
